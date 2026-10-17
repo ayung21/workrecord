@@ -13,6 +13,12 @@ const { d1, r2 } = hostingConfig;
 const isCodexSeatbeltSandbox = process.env.CODEX_SANDBOX === "seatbelt";
 const managedLinux = readExecutionProfile() === "managed-linux";
 
+const apiOrigin = (
+  process.env.API_URL ??
+  process.env.NEXT_PUBLIC_API_URL ??
+  "http://localhost:3007"
+).replace(/\/$/, "");
+
 const localBindingConfig = {
   main: "vinext/server/fetch-handler",
   compatibility_flags: ["nodejs_compat"],
@@ -50,10 +56,34 @@ export default defineConfig(async () => {
   // Wrangler snapshots its log path while the Cloudflare plugin is imported.
   const { cloudflare } = await import("@cloudflare/vite-plugin");
 
+  const devWatch = {
+    ignored: [
+      "**/node_modules/**",
+      "**/.git/**",
+      "**/.sites-runtime/**",
+      "**/.wrangler/**",
+      "**/.pnpm-store/**",
+      "**/dist/**",
+      "**/.next/**",
+      "**/.vinext/**",
+    ],
+    ...(isCodexSeatbeltSandbox
+      ? { useFsEvents: false, usePolling: true }
+      : {}),
+  };
+
   return {
     server: {
       ...(managedLinux ? { host: "0.0.0.0", allowedHosts: ["terminal.local"] } : {}),
-      ...(isCodexSeatbeltSandbox ? { watch: { useFsEvents: false, usePolling: true } } : {}),
+      watch: devWatch,
+      // Vinext dev tidak selalu menerapkan next.config rewrites — proxy /api ke NestJS
+      proxy: {
+        "/api": {
+          target: apiOrigin,
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/api/, ""),
+        },
+      },
     },
     plugins: [
       vinext(),
