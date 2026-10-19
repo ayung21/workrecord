@@ -29,6 +29,7 @@ export default function VerifikasiPage() {
     null,
   );
   const [companyId, setCompanyId] = useState<string | null>(null);
+  const [companyName, setCompanyName] = useState("");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [errorModal, setErrorModal] = useState<string | null>(null);
@@ -48,6 +49,7 @@ export default function VerifikasiPage() {
         const me = await fetchMyCompany(accessToken);
         if (cancelled) return;
         setCompanyId(String(me.id));
+        setCompanyName(me.name ?? "");
         setVerification(me.verification);
       } finally {
         if (!cancelled) setLoading(false);
@@ -62,6 +64,7 @@ export default function VerifikasiPage() {
     if (!accessToken) return;
     const me = await fetchMyCompany(accessToken);
     setCompanyId(String(me.id));
+    setCompanyName(me.name ?? "");
     setVerification(me.verification);
     await refreshPortalStatus();
   };
@@ -158,6 +161,7 @@ export default function VerifikasiPage() {
         </div>
       ) : verification ? (
         <CompanyVerificationPanel
+          companyName={companyName}
           verification={verification}
           busy={busy}
           showLockedNotice={!statusLoading && !isActive}

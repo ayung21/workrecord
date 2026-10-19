@@ -17,6 +17,7 @@ import {
 import type { CompanyVerification } from "@/lib/api/company-portal";
 import { companyDocumentAcceptAttr } from "@/lib/company/document-upload";
 import { PORTAL_LOCKED_MESSAGE } from "@/lib/company/verification";
+import { CompanyMemberCertificateSection } from "@/components/company/company-member-certificate-section";
 
 const DOC_META: Record<
   string,
@@ -106,6 +107,7 @@ function stepIndex(verification: CompanyVerification): number {
 }
 
 type Props = {
+  companyName?: string;
   verification: CompanyVerification;
   busy: boolean;
   showLockedNotice: boolean;
@@ -122,6 +124,7 @@ type Props = {
 };
 
 export function CompanyVerificationPanel({
+  companyName = "Perusahaan",
   verification,
   busy,
   showLockedNotice,
@@ -171,6 +174,13 @@ export function CompanyVerificationPanel({
             <p>Semua layanan portal perusahaan sudah dapat digunakan.</p>
           </div>
         </div>
+      )}
+
+      {verification.memberCertificate?.canDownload && (
+        <CompanyMemberCertificateSection
+          companyName={companyName}
+          certificate={verification.memberCertificate}
+        />
       )}
 
       <section className="company-verify-status-card" aria-labelledby="company-verify-status-title">

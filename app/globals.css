@@ -479,3 +479,133 @@
 .company-ads-aside{position:static}
 .company-ads-fields{grid-template-columns:1fr}
 }
+
+/* —— Sertifikat member & verifikasi QR —— */
+.company-member-cert-section{border:1px solid #dfe6ef;border-radius:16px;padding:22px 24px;background:linear-gradient(165deg,#fafcff 0%,#fff 60%);display:grid;gap:20px}
+.company-member-cert-intro h2{margin:0 0 8px;font-size:18px;font-weight:650;color:var(--navy)}
+.company-member-cert-intro p{margin:0;font-size:14px;line-height:1.7;color:#67728a;max-width:60ch}
+.company-member-cert-grid{display:grid;grid-template-columns:minmax(0,220px) 1fr;gap:24px;align-items:start}
+.company-member-cert-qr-card{display:grid;gap:12px;justify-items:center;padding:18px;border-radius:14px;border:1px solid #e2e8f0;background:#fff;text-align:center}
+.company-member-cert-qr-head{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--navy)}
+.company-member-cert-qr-hint{margin:0;font-size:12px;line-height:1.55;color:#64748b}
+.company-member-cert-link{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--blue)}
+.company-member-cert-actions{display:grid;gap:12px;align-content:start;font-size:14px;color:#52617c}
+.company-member-cert-download{display:inline-flex;align-items:center;gap:8px;justify-self:start}
+.company-member-cert-download-error{margin:0;font-size:12px;line-height:1.5;color:#b91c1c}
+.company-member-cert-preview summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--blue)}
+.company-member-cert-preview{margin-top:8px}
+.member-cert-page{min-height:100dvh;background:#0a0f18;padding:24px 16px 48px}
+.member-cert-page--center{display:grid;place-items:center;gap:12px;color:#94a3b8;font-size:14px}
+.member-cert-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;margin:0 auto 20px;max-width:920px}
+.member-cert-toolbar-hint{margin:0;font-size:12px;color:#94a3b8}
+.member-cert{max-width:920px;margin:0 auto;padding:32px 36px 40px;border-radius:4px;background:#05070d;color:#e2e8f0;position:relative;overflow:hidden;box-shadow:0 24px 80px -20px #00000080}
+.member-cert::after{content:"";position:absolute;right:-40px;bottom:-60px;width:280px;height:200px;background:linear-gradient(135deg,#1d4ed8 0%,#0ea5e9 55%,transparent 100%);opacity:.35;border-radius:40% 0 0 0;pointer-events:none}
+.member-cert-header{margin-bottom:12px}
+.member-cert-brand{display:grid;gap:4px}
+.member-cert-logo{height:auto;width:auto;max-width:200px}
+.member-cert-tagline{margin:0;font-size:11px;letter-spacing:.6px;color:#64748b}
+.member-cert-divider{height:2px;background:linear-gradient(90deg,#1e3a8a 0%,#0f172a 100%);margin:16px 0 24px}
+.member-cert-title{margin:0 0 28px;font-size:clamp(28px,4vw,42px);font-weight:800;letter-spacing:2px;color:#1e3a8a;line-height:1.1}
+.member-cert-title-accent{position:relative;display:inline-block}
+.member-cert-title-accent::after{content:"";position:absolute;left:0;bottom:-6px;width:48%;height:4px;background:#2563eb;border-radius:2px}
+.member-cert-body{display:grid;grid-template-columns:1fr minmax(0,240px);gap:28px;border-top:1px solid #1e293b;padding-top:24px}
+.member-cert-lead{margin:0 0 20px;font-size:14px;line-height:1.75;color:#94a3b8;max-width:42ch}
+.member-cert-lead strong{color:#e2e8f0}
+.member-cert-slogan{margin:0 0 28px;display:grid;gap:4px;font-size:clamp(22px,3vw,30px);font-weight:800;line-height:1.15;color:#1e40af}
+.member-cert-slogan-accent{color:#38bdf8}
+.member-cert-qr-row{display:flex;align-items:flex-end;gap:16px;padding-top:16px;border-top:1px solid #1e293b}
+.member-cert-qr-copy p{margin:0 0 8px;font-size:12px;line-height:1.5;color:#94a3b8}
+.member-cert-member-id{font-size:13px!important;color:#cbd5e1!important}
+.member-cert-benefits{display:grid;gap:18px;padding-left:20px;border-left:1px solid #1e293b;align-content:start}
+.member-cert-benefit{display:flex;align-items:center;gap:12px;font-size:13px;font-weight:600;color:#94a3b8}
+.member-cert-benefit-icon{width:40px;height:40px;border-radius:999px;background:linear-gradient(180deg,#2563eb,#1d4ed8);display:grid;place-items:center;color:#fff;flex-shrink:0}
+.member-cert-company-name{margin:28px 0 0;font-size:15px;font-weight:700;color:#e2e8f0;letter-spacing:.3px}
+.member-cert.member-cert--print{background:#fff;color:var(--navy);box-shadow:0 24px 60px -20px #00000055,0 0 0 1px #e2e8f0}
+.member-cert.member-cert--print::after{opacity:.2;background:linear-gradient(135deg,#93c5fd 0%,#38bdf8 45%,transparent 100%)}
+.member-cert.member-cert--print .member-cert-divider{background:linear-gradient(90deg,#1d4ed8 0%,#e2e8f0 100%)}
+.member-cert.member-cert--print .member-cert-body{border-top-color:#e2e8f0}
+.member-cert.member-cert--print .member-cert-lead{color:#52617c}
+.member-cert.member-cert--print .member-cert-lead strong{color:var(--navy)}
+.member-cert.member-cert--print .member-cert-slogan{color:#1e3a8a}
+.member-cert.member-cert--print .member-cert-slogan-accent{color:var(--blue)}
+.member-cert.member-cert--print .member-cert-qr-row{border-top-color:#e2e8f0}
+.member-cert.member-cert--print .member-cert-qr-copy p{color:#64748b}
+.member-cert.member-cert--print .member-cert-member-id{color:#475569!important}
+.member-cert.member-cert--print .member-cert-benefits{border-left-color:#e2e8f0}
+.member-cert.member-cert--print .member-cert-benefit{color:#52617c}
+.member-cert.member-cert--print .member-cert-company-name{color:var(--navy)}
+.member-cert-page-frame{overflow-x:auto;padding:0 16px 32px;display:flex;justify-content:center}
+.member-cert-toolbar-error{margin:0;font-size:12px;color:#fca5a5;max-width:52ch;line-height:1.5}
+.member-cert-sheet{
+  position:relative;box-sizing:border-box;flex:0 0 auto;width:1050px;max-width:none;margin:0;
+  padding:44px 52px 40px;background:#fff;color:var(--navy);overflow:hidden;border:1px solid #e2e8f0;
+  box-shadow:0 24px 60px -20px #00000055;font-family:"Inter",system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+}
+.member-cert-sheet-header{margin-bottom:10px}
+.member-cert-sheet-logo{display:block;width:180px;height:auto}
+.member-cert-sheet-tagline{margin:6px 0 0;font-size:11px;letter-spacing:.5px;color:#64748b}
+.member-cert-sheet-rule{height:2px;margin:12px 0 18px;background:linear-gradient(90deg,#1d4ed8 0%,#e2e8f0 100%)}
+.member-cert-sheet-title{margin:0 0 20px;font-size:36px;font-weight:800;letter-spacing:2px;color:#1e3a8a;line-height:1.05}
+.member-cert-sheet-title-accent{position:relative;display:inline-block}
+.member-cert-sheet-title-accent::after{content:"";position:absolute;left:0;bottom:-5px;width:48%;height:4px;background:#2563eb;border-radius:2px}
+.member-cert-sheet-cols{display:flex;flex-direction:row;align-items:flex-start;gap:28px;border-top:1px solid #e2e8f0;padding-top:22px}
+.member-cert-sheet-main{flex:1 1 auto;min-width:0}
+.member-cert-sheet-lead{margin:0 0 16px;font-size:14px;line-height:1.7;color:#52617c}
+.member-cert-sheet-lead strong{color:var(--navy)}
+.member-cert-sheet-slogan{margin:0 0 22px;font-size:24px;font-weight:800;line-height:1.2;color:#1e3a8a}
+.member-cert-sheet-slogan-accent{display:block;color:var(--blue);margin-top:4px}
+.member-cert-sheet-qr{display:flex;flex-direction:row;align-items:flex-end;gap:16px;margin-top:8px;padding-top:16px;border-top:1px solid #e2e8f0}
+.member-cert-sheet-qr img,.member-cert-qr-img{display:block;width:100px;height:100px;flex-shrink:0}
+.member-cert-sheet-qr-text{font-size:12px;line-height:1.5;color:#64748b;padding-bottom:2px}
+.member-cert-sheet-qr-text p{margin:0 0 6px}
+.member-cert-sheet-qr-text strong{color:var(--navy)}
+.member-cert-sheet-benefits{flex:0 0 220px;padding-left:20px;border-left:1px solid #e2e8f0}
+.member-cert-sheet-benefits .member-cert-benefit{display:flex;align-items:center;gap:10px;margin-bottom:16px;font-size:12px;font-weight:600;color:#52617c;line-height:1.35}
+.member-cert-sheet-benefits .member-cert-benefit:last-child{margin-bottom:0}
+.member-cert-sheet-company{margin:22px 0 0;font-size:15px;font-weight:700;color:var(--navy)}
+.member-cert-sheet-corner{position:absolute;right:-30px;bottom:-40px;width:200px;height:140px;background:linear-gradient(135deg,#93c5fd 0%,#38bdf8 50%,transparent 100%);opacity:.25;border-radius:40% 0 0 0;pointer-events:none}
+.member-verify-page{max-width:520px;margin:0 auto;padding:20px 16px 40px;background:#f8fafc;min-height:100dvh}
+.member-verify-page--center{display:grid;place-items:center;gap:12px;text-align:center}
+.member-verify-header{text-align:center;margin-bottom:22px;padding:0 4px}
+.member-verify-title{margin:18px auto 0;max-width:min(100%,20rem);font-size:clamp(1.375rem,4.8vw,1.75rem);font-weight:650;letter-spacing:-.04em;line-height:1.28;color:var(--navy);text-wrap:balance;font-family:"Inter",system-ui,-apple-system,"Segoe UI",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.member-verify-brand{display:inline-block}
+.member-verify-banner{display:flex;gap:12px;padding:16px;border-radius:12px;margin-bottom:20px;font-size:13px;line-height:1.6}
+.member-verify-banner strong{display:block;font-size:12px;letter-spacing:.4px;margin-bottom:4px}
+.member-verify-banner p{margin:0}
+.member-verify-banner--ok{background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46}
+.member-verify-banner--ok svg{color:#16a34a;flex-shrink:0}
+.member-verify-banner--warn{background:#fffbeb;border:1px solid #fde68a;color:#92400e}
+.member-verify-card{border:1px solid #e2e8f0;border-radius:14px;padding:18px 20px;background:#fff;margin-bottom:20px}
+.member-verify-card h2{margin:0 0 16px;font-size:13px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#64748b}
+.member-verify-kv{display:grid;grid-template-columns:1fr 1fr;gap:14px 16px;margin:0}
+.member-verify-kv>div{display:grid;gap:4px}
+.member-verify-kv-wide{grid-column:1/-1}
+.member-verify-kv dt{margin:0;font-size:11px;font-weight:600;color:#94a3b8}
+.member-verify-kv dd{margin:0;font-size:13px;font-weight:600;color:#1e293b}
+.member-verify-dot{display:inline-flex;align-items:center;gap:6px;font-weight:700}
+.member-verify-dot::before{content:"";width:8px;height:8px;border-radius:999px;background:currentColor}
+.member-verify-dot--ok{color:#16a34a}
+.member-verify-dot--warn{color:#d97706}
+.member-verify-benefits-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px}
+.member-verify-benefit-chip{display:grid;gap:8px;justify-items:center;text-align:center;padding:12px 8px;border-radius:12px;background:#fff;border:1px solid #e2e8f0;font-size:10px;font-weight:700;color:#475569;line-height:1.35}
+.member-verify-benefit-chip svg{color:var(--blue)}
+.member-verify-info{display:flex;gap:12px;padding:16px;border-radius:12px;background:#eff6ff;border:1px solid #bfdbfe;margin-bottom:20px;font-size:12px;line-height:1.65;color:#1e3a8a}
+.member-verify-info h3{margin:0 0 8px;font-size:12px;font-weight:700}
+.member-verify-info ul{margin:0;padding-left:18px}
+.member-verify-actions{display:grid;gap:10px;margin-bottom:28px}
+.member-verify-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:14px 16px;border-radius:10px;font-size:14px;font-weight:700;border:none;cursor:pointer;text-decoration:none}
+.member-verify-btn--primary{background:var(--blue);color:#fff}
+.member-verify-btn--secondary{background:#fff;color:var(--blue);border:2px solid var(--blue)}
+.member-verify-footer{text-align:center}
+.member-verify-footer-slogan{margin:0 0 12px;font-size:14px;font-weight:700;color:var(--blue)}
+.member-verify-footer-copy{margin:0;font-size:11px;color:#94a3b8}
+.member-verify-footer-url{margin:8px 0 0;font-size:10px;color:#cbd5e1;word-break:break-all}
+.member-verify-error{padding:24px;max-width:400px}
+.member-verify-error h1{margin:0 0 8px;font-size:18px}
+@media screen and (max-width:720px){
+.member-cert-body{grid-template-columns:1fr}
+.member-cert-benefits{border-left:none;padding-left:0;border-top:1px solid #1e293b;padding-top:20px}
+.company-member-cert-grid{grid-template-columns:1fr}
+.member-verify-benefits-row{grid-template-columns:1fr}
+.member-verify-kv{grid-template-columns:1fr}
+}

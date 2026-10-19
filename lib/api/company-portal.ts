@@ -1,9 +1,20 @@
 import { apiFetch } from "./client";
 
+export type MemberCertificateInfo = {
+  memberId: string;
+  verifyToken: string;
+  validUntil: string | null;
+  joinedAt: string;
+  lastVerifiedAt: string;
+  domicile: string | null;
+  canDownload: boolean;
+};
+
 export type CompanyVerification = {
   companyId: string;
   operationalStatus: string;
   surveyStatus: string;
+  memberCertificate?: MemberCertificateInfo | null;
   documents: {
     type: string;
     status: string;
