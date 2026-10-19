@@ -1,5 +1,5 @@
 import Image from "next/image";
-import Link from "next/link";
+import Link from "@/components/app-link";
 
 /** Logo brand di atas kartu login / lupa password */
 export function AuthFormLogo() {

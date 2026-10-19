@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/app-link";
 import { useEffect, useState } from "react";
 import { ArrowUpRight, ArrowRight, Check, ShieldCheck, Search, Building2, Factory, Users, GraduationCap, BriefcaseBusiness, FileCheck2, LockKeyhole, Layers3, ChevronDown, Menu, X, Play, CheckCheck, Clock3, Fingerprint, Globe2 } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";

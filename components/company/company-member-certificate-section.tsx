@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import Link from "@/components/app-link";
 import { Download, ExternalLink, Loader2, QrCode } from "lucide-react";
 import type { MemberCertificateInfo } from "@/lib/api/company-portal";
 import { CompanyMemberCertificate } from "@/components/company/company-member-certificate";

@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
+import Link from "@/components/app-link";
 import { Check, ShieldCheck } from "lucide-react";
 import { HeaderAuthLink } from "@/components/header-auth-link";
 
