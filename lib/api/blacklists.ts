@@ -1,11 +1,12 @@
 import { apiFetch } from "./client";
-import { mockCompletePayment } from "./companies";
+import type { ManualTransferInfo, PaymentCheckoutResult } from "./manual-payment";
 
 export type BlacklistCheckoutInput = {
   employeeRecordId: string;
   note: string;
   email: string;
   voucherCode?: string;
+  manualBankAccountId?: string;
 };
 
 export type BlacklistCheckoutResponse =
@@ -13,13 +14,10 @@ export type BlacklistCheckoutResponse =
       mode: "PENDING_APPROVAL";
       request: { id: string; status: string; action: string };
     }
-  | {
+  | ({
       mode: "CHECKOUT";
-      paymentId: string;
-      amount: number;
-      redirectUrl?: string;
       requestId?: string;
-    };
+    } & PaymentCheckoutResult);
 
 export function blacklistCheckout(token: string, input: BlacklistCheckoutInput) {
   return apiFetch<BlacklistCheckoutResponse>("blacklists/checkout", {
@@ -32,7 +30,7 @@ export function blacklistCheckout(token: string, input: BlacklistCheckoutInput) 
 export function approveBlacklistCheckout(
   token: string,
   requestId: string,
-  input: { email: string; voucherCode?: string },
+  input: { email: string; voucherCode?: string; manualBankAccountId?: string },
 ) {
   return apiFetch<BlacklistCheckoutResponse>(
     `blacklists/approvals/${requestId}/checkout`,
@@ -63,19 +61,29 @@ export function cancelBlacklist(token: string, blacklistId: string) {
   });
 }
 
+export type CompleteBlacklistPaymentResult =
+  | { kind: "redirect" }
+  | { kind: "manual"; manualTransfer: ManualTransferInfo }
+  | { kind: "mock_paid" };
+
 export async function completeBlacklistPayment(
-  checkout: { paymentId: string; redirectUrl?: string },
+  checkout: PaymentCheckoutResult,
   token: string,
-) {
+): Promise<CompleteBlacklistPaymentResult> {
+  if (checkout.manualTransfer) {
+    return { kind: "manual", manualTransfer: checkout.manualTransfer };
+  }
   if (
     checkout.redirectUrl &&
     typeof window !== "undefined" &&
     !checkout.redirectUrl.includes("mock")
   ) {
     window.location.assign(checkout.redirectUrl);
-    return;
+    return { kind: "redirect" };
   }
-  await mockCompletePayment(checkout.paymentId, token);
+  throw new Error(
+    "Menunggu konfirmasi pembayaran. Untuk transfer manual, selesaikan transfer lalu minta admin WorkRecord mengonfirmasi di menu Transaksi.",
+  );
 }
 
 export async function payAndActivateBlacklist(

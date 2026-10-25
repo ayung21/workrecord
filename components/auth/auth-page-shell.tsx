@@ -36,27 +36,28 @@ const panelCopy = {
   register: {
     id: {
       eyebrow: "PENDAFTARAN PERUSAHAAN",
-      title: "Aktifkan paket Kelola Record untuk tim Anda",
+      title: "Daftarkan Perusahaan Anda Secara Gratis",
       lead:
-        "Daftarkan perusahaan, buat dua akun (Admin & Master), lalu lanjut ke pembayaran langganan.",
+        "Daftarkan perusahaan Anda secara GRATIS. Lengkapi identitas perusahaan dan dokumen legalitas untuk proses verifikasi. Setelah akun disetujui, perusahaan dapat mengakses layanan WorkRecord melalui akun Master dan Admin",
       points: [
-        "Data perusahaan dan kontak resmi",
-        "Akun pembayar + akun kedua untuk login",
-        "Syarat & ketentuan sebelum aktivasi",
+        "Lengkapi data perusahaan, penanggung jawab, dan kontak resmi",
+        "Kelola dan telusuri riwayat kerja pekerja melalui akun perusahaan.",
+        "Setujui Syarat & Ketentuan, kemudian tunggu proses verifikasi oleh tim WorkRecord.",
       ],
-      foot: "Pendaftaran hanya untuk perusahaan yang belum memiliki akun aktif.",
+      foot: "Pendaftaran dan penggunaan WorkRecord GRATIS. Biaya hanya dikenakan untuk layanan pengajuan sanggahan terhadap data atau catatan pekerja.\n Pendaftaran khusus untuk perusahaan yang belum memiliki akun WorkRecord aktif.",
     },
     en: {
       eyebrow: "COMPANY REGISTRATION",
-      title: "Activate Manage Records for your team",
+      title: "Register Your Company for Free",
       lead:
-        "Register your company, create two accounts (Admin & Master), then continue to subscription payment.",
+        "Register your company for FREE. Complete your company identity and legal documents for verification. Once approved, your company can access WorkRecord through Master and Admin accounts.",
       points: [
-        "Company details and official contacts",
-        "Payer account + second login account",
-        "Terms acceptance before activation",
+        "Complete company details, authorized representative, and official contact information",
+        "Manage and review employee work history through your company account.",
+        "Accept the Terms & Conditions, then wait for verification by the WorkRecord team.",
       ],
-      foot: "Registration is for companies without an active account yet.",
+      foot:
+        "WorkRecord registration and use are FREE. Fees apply only when submitting disputes against employee data or records.\n Registration is for companies that do not yet have an active WorkRecord account.",
     },
   },
 };

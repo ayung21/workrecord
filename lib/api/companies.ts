@@ -1,4 +1,5 @@
 import { apiFetch } from "./client";
+import type { PaymentCheckoutResult } from "./manual-payment";
 import { getPaymentMockSecret, paymentMockSecretHeaders } from "./payment-mock";
 import { COMPANY_TERMS_VERSION } from "@/lib/constants/company-terms";
 
@@ -49,9 +50,13 @@ export function registerCompany(input: RegisterCompanyInput) {
 
 export function createDisputeCheckout(
   token: string,
-  input: { email: string; employeeRecordId?: string },
+  input: {
+    email: string;
+    employeeRecordId?: string;
+    manualBankAccountId?: string;
+  },
 ) {
-  return apiFetch<{ paymentId: string; amount: number; redirectUrl?: string }>(
+  return apiFetch<PaymentCheckoutResult>(
     "disputes/checkout",
     {
       method: "POST",
