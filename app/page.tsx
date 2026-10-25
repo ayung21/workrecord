@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "@/components/app-link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { ArrowUpRight, ArrowRight, Check, ShieldCheck, Search, Building2, Factory, Users, GraduationCap, BriefcaseBusiness, FileCheck2, LockKeyhole, Layers3, ChevronDown, Menu, X, Play, CheckCheck, Clock3, Fingerprint, Globe2 } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -53,7 +54,39 @@ const copy = {
   }
 };
 
-function Brand({light=false}:{light?:boolean}) {return <Link href="/" className={`brand ${light ? "brand-light" : ""}`} aria-label="WorkRecord"><span className="brand-mark"><CheckCheck strokeWidth={3} size={25}/></span><span>work<span className="font-normal">record</span><span className="brand-dot">.</span></span></Link>}
+function HomeHeaderLogo() {
+  return (
+    <Link href="/" className="brand brand-home-logo" aria-label="Work Record">
+      <Image
+        src="/logo_dashboard.jpeg"
+        alt=""
+        width={44}
+        height={44}
+        className="brand-home-logo-img"
+        priority
+      />
+      <span className="brand-home-logo-text">WORK RECORD</span>
+    </Link>
+  );
+}
+
+function Brand({ light = false }: { light?: boolean }) {
+  return (
+    <Link
+      href="/"
+      className={`brand ${light ? "brand-light" : ""}`}
+      aria-label="WorkRecord"
+    >
+      <span className="brand-mark">
+        <CheckCheck strokeWidth={3} size={25} />
+      </span>
+      <span>
+        work<span className="font-normal">record</span>
+        <span className="brand-dot">.</span>
+      </span>
+    </Link>
+  );
+}
 
 export default function Home() {
   const [lang,setLang] = useState<"id"|"en">("id");
@@ -63,7 +96,7 @@ export default function Home() {
   useEffect(()=>{document.documentElement.lang=lang},[lang]);
   const links=["tentang","solusi","cara-kerja"];
   return <div className="site-shell">
-    <header className="site-header"><div className="container header-inner"><Brand/><nav className="desktop-nav" aria-label={lang==="id"?"Navigasi utama":"Main navigation"}><Link href="/jelajahi">{t.navExplore}</Link>{t.nav.map((n,i)=><a key={n} href={`#${links[i]}`}>{n}</a>)}</nav><div className="header-actions"><div className="language" aria-label="Language"><button aria-pressed={lang==="id"} onClick={()=>setLang("id")}>ID</button><span>/</span><button aria-pressed={lang==="en"} onClick={()=>setLang("en")}>EN</button></div><HeaderAuthLink lang={lang}/><Link className="button button-dark header-cta" href="/jelajahi">{t.navExplore}<ArrowUpRight size={16}/></Link><button className="mobile-toggle" aria-label={menu?"Close menu":"Open menu"} aria-expanded={menu} onClick={()=>setMenu(!menu)}>{menu?<X/>:<Menu/>}</button></div></div>{menu&&<nav className="mobile-nav"><Link href="/jelajahi" onClick={()=>setMenu(false)}>{t.navExplore}</Link>{t.nav.map((n,i)=><a key={n} href={`#${links[i]}`} onClick={()=>setMenu(false)}>{n}</a>)}<HeaderAuthLink lang={lang} onNavigate={()=>setMenu(false)} className="mobile-nav-auth"/></nav>}</header>
+    <header className="site-header"><div className="container header-inner"><HomeHeaderLogo/><nav className="desktop-nav" aria-label={lang==="id"?"Navigasi utama":"Main navigation"}><Link href="/jelajahi">{t.navExplore}</Link>{t.nav.map((n,i)=><a key={n} href={`#${links[i]}`}>{n}</a>)}</nav><div className="header-actions"><div className="language" aria-label="Language"><button aria-pressed={lang==="id"} onClick={()=>setLang("id")}>ID</button><span>/</span><button aria-pressed={lang==="en"} onClick={()=>setLang("en")}>EN</button></div><HeaderAuthLink lang={lang}/><Link className="button button-dark header-cta" href="/jelajahi">{t.navExplore}<ArrowUpRight size={16}/></Link><button className="mobile-toggle" aria-label={menu?"Close menu":"Open menu"} aria-expanded={menu} onClick={()=>setMenu(!menu)}>{menu?<X/>:<Menu/>}</button></div></div>{menu&&<nav className="mobile-nav"><Link href="/jelajahi" onClick={()=>setMenu(false)}>{t.navExplore}</Link>{t.nav.map((n,i)=><a key={n} href={`#${links[i]}`} onClick={()=>setMenu(false)}>{n}</a>)}<HeaderAuthLink lang={lang} onNavigate={()=>setMenu(false)} className="mobile-nav-auth"/></nav>}</header>
     <main>
       <HomeActiveAds lang={lang} />
       <section className="hero"><div className="container hero-grid"><div className="hero-copy"><div className="eyebrow"><span className="eyebrow-line"/>{t.eyebrow}</div><h1>{t.headline}</h1><p className="hero-description">{t.intro}</p><div className="hero-actions"><a href="#solusi" className="button button-blue">{t.start}<ArrowUpRight size={19}/></a><button className="demo-link" onClick={()=>setModal("demo")}><span className="play-icon"><Play size={12} fill="currentColor"/></span>{t.demo}</button></div><div className="hero-note"><ShieldCheck size={17}/>{t.note}</div></div>
