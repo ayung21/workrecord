@@ -12,7 +12,10 @@ import {
 import { PortalShell } from "@/components/company/portal-shell";
 import { readSession } from "@/lib/auth/session";
 import { checkoutCompanyAd } from "@/lib/api/ads";
-import { mockCompletePayment } from "@/lib/api/companies";
+import { ManualBankAccountPicker } from "@/components/payments/manual-bank-picker";
+import { ManualTransferCard } from "@/components/payments/manual-transfer-card";
+import type { ManualTransferInfo } from "@/lib/api/manual-payment";
+import { useManualBankSelection } from "@/lib/payments/use-manual-bank-selection";
 import { ApiRequestError } from "@/lib/api/client";
 import { fetchPricingCatalog, type PricingCatalog } from "@/lib/api/pricing";
 import { HERO_BANNER_IMAGE_SPEC } from "@/lib/ads/display";
@@ -32,8 +35,12 @@ export default function CompanyAdsPage() {
     ctaUrl: "",
   });
   const [message, setMessage] = useState<string | null>(null);
+  const [pendingManual, setPendingManual] = useState<ManualTransferInfo | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const manualBank = useManualBankSelection();
 
   useEffect(() => {
     fetchPricingCatalog()
@@ -66,9 +73,15 @@ export default function CompanyAdsPage() {
       setError("Pilih paket iklan terlebih dahulu.");
       return;
     }
+    const bankErr = manualBank.validateSelection();
+    if (bankErr) {
+      setError(bankErr);
+      return;
+    }
     setBusy(true);
     setError(null);
     setMessage(null);
+    setPendingManual(null);
     try {
       const checkout = await checkoutCompanyAd(token, {
         adPackageId,
@@ -76,10 +89,17 @@ export default function CompanyAdsPage() {
         subtitle: form.subtitle.trim() || undefined,
         ctaLabel: form.ctaLabel.trim() || undefined,
         ctaUrl: form.ctaUrl.trim() || undefined,
+        manualBankAccountId: manualBank.selectedAccountId || undefined,
       });
-      await mockCompletePayment(checkout.paymentId);
-      setMessage(
-        "Pembayaran iklan berhasil (simulasi). Iklan akan tampil setelah diverifikasi sistem.",
+      if (checkout.manualTransfer) {
+        setPendingManual(checkout.manualTransfer);
+        setMessage(
+          "Pesanan iklan terdaftar. Setelah transfer sesuai nominal, admin WorkRecord akan mengonfirmasi pembayaran dan mengaktifkan iklan.",
+        );
+        return;
+      }
+      setError(
+        "Instruksi transfer manual tidak diterima dari server. Pastikan API memakai PAYMENT_GATEWAY=manual, lalu coba lagi.",
       );
     } catch (err) {
       setError(
@@ -120,6 +140,12 @@ export default function CompanyAdsPage() {
             <CheckCircle2 size={20} aria-hidden />
             {message}
           </div>
+        ) : null}
+        {pendingManual ? (
+          <ManualTransferCard
+            info={pendingManual}
+            title="Transfer pembayaran iklan"
+          />
         ) : null}
 
         <div className="company-ads-layout">
@@ -221,6 +247,16 @@ export default function CompanyAdsPage() {
                 </label>
               </div>
             </section>
+
+            <ManualBankAccountPicker
+              accounts={manualBank.accounts}
+              value={manualBank.selectedId}
+              onChange={manualBank.setSelectedId}
+              disabled={busy || manualBank.loading}
+            />
+            {manualBank.error ? (
+              <p className="explore-error">{manualBank.error}</p>
+            ) : null}
 
             <button
               type="submit"

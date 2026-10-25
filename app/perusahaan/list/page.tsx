@@ -24,6 +24,9 @@ import {
   completeBlacklistPayment,
   rejectBlacklistRequest,
 } from "@/lib/api/blacklists";
+import { ManualBankAccountPicker } from "@/components/payments/manual-bank-picker";
+import { showManualTransferAlert } from "@/lib/payments/manual-transfer-alert";
+import { useManualBankSelection } from "@/lib/payments/use-manual-bank-selection";
 import { formatApiErrorMessage } from "@/lib/api/client";
 import { fetchPricingCatalog } from "@/lib/api/pricing";
 import {
@@ -109,6 +112,7 @@ export default function ListKaryawanPage() {
   const session = readSession();
   const token = session?.accessToken ?? "";
   const companyId = session?.user.companyId ?? "";
+  const manualBank = useManualBankSelection();
 
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
@@ -154,6 +158,13 @@ export default function ListKaryawanPage() {
     session?.user.accountType === "LEADERSHIP" ||
     session?.user.roleCode === "OWNER";
   const isAdmin = session?.user.accountType === "ADMIN";
+  /** Ajukan ke pimpinan — tidak bayar di langkah ini (hanya pimpinan yang transfer). */
+  const submitsSanggahanForApproval =
+    blMode === "admin_submit" ||
+    (blMode === "leadership_pay" && !isLeadership);
+  const requiresManualBankOnSubmit =
+    blMode === "leadership_approve" ||
+    (blMode === "leadership_pay" && isLeadership);
 
   useEffect(() => {
     if (!blRecordId || !token || blMode === "admin_submit") {
@@ -496,7 +507,10 @@ export default function ListKaryawanPage() {
   };
 
   const onBlacklist = async () => {
-    if (!token) return;
+    if (!token) {
+      setError("Sesi login habis. Silakan keluar lalu login ulang.");
+      return;
+    }
     const email = session?.user.email?.trim();
     if (!email) {
       setError(
@@ -504,7 +518,24 @@ export default function ListKaryawanPage() {
       );
       return;
     }
-    if (!blNote.trim() || blNote.trim().length < 10) return;
+    const note = blNote.trim();
+    if (note.length < 10) {
+      await Swal.fire({
+        icon: "warning",
+        title: "Alasan terlalu singkat",
+        text: `Isi alasan sanggahan minimal 10 karakter (saat ini ${note.length}).`,
+        confirmButtonText: "Mengerti",
+        confirmButtonColor: "#2459df",
+      });
+      return;
+    }
+    if (requiresManualBankOnSubmit) {
+      const bankErr = manualBank.validateSelection();
+      if (bankErr) {
+        setError(bankErr);
+        return;
+      }
+    }
     setBusy(true);
     setError(null);
     try {
@@ -512,27 +543,43 @@ export default function ListKaryawanPage() {
         const checkout = await approveBlacklistCheckout(token, blRequestId, {
           email,
           voucherCode: blVoucher.trim() || undefined,
+          manualBankAccountId: manualBank.selectedAccountId || undefined,
         });
         if (checkout.mode === "CHECKOUT") {
-          await completeBlacklistPayment(checkout, token);
+          const paid = await completeBlacklistPayment(checkout, token);
+          closeBlacklistModal();
+          await reload();
+          if (paid.kind === "manual") {
+            await showManualTransferAlert(
+              "Menunggu konfirmasi transfer",
+              paid.manualTransfer,
+              "Setelah dana masuk, admin WorkRecord akan mengonfirmasi. Sanggahan aktif setelah pembayaran disetujui.",
+            );
+            return;
+          }
+          await Swal.fire({
+            icon: "success",
+            title: "Disanggahkan",
+            text: "Pengajuan disetujui dan pembayaran selesai.",
+            confirmButtonColor: "#2459df",
+          });
+          return;
         }
         closeBlacklistModal();
         await reload();
-        await Swal.fire({
-          icon: "success",
-          title: "Disanggahkan",
-          text: "Pengajuan disetujui dan pembayaran selesai.",
-          confirmButtonColor: "#2459df",
-        });
         return;
       }
 
-      if (!blRecordId) return;
+      if (!blRecordId) {
+        setError("Data karyawan tidak ditemukan. Tutup dialog lalu coba lagi.");
+        return;
+      }
       const result = await blacklistCheckout(token, {
         employeeRecordId: blRecordId,
-        note: blNote.trim(),
+        note,
         email,
         voucherCode: blVoucher.trim() || undefined,
+        manualBankAccountId: manualBank.selectedAccountId || undefined,
       });
 
       if (result.mode === "PENDING_APPROVAL") {
@@ -542,15 +589,23 @@ export default function ListKaryawanPage() {
           icon: "info",
           title: "Menunggu pimpinan",
           text:
-            "Pengajuan sanggahan dikirim. Pimpinan perlu menyetujui dan membayar melalui payment gateway.",
+            "Pengajuan sanggahan dikirim. Pimpinan perlu menyetujui lalu melakukan transfer sesuai instruksi pembayaran.",
           confirmButtonColor: "#2459df",
         });
         return;
       }
 
-      await completeBlacklistPayment(result, token);
+      const paid = await completeBlacklistPayment(result, token);
       closeBlacklistModal();
       await reload();
+      if (paid.kind === "manual") {
+        await showManualTransferAlert(
+          "Menunggu konfirmasi transfer",
+          paid.manualTransfer,
+          "Setelah dana masuk, admin WorkRecord akan mengonfirmasi. Sanggahan aktif setelah pembayaran disetujui.",
+        );
+        return;
+      }
       await Swal.fire({
         icon: "success",
         title: "Disanggahkan",
@@ -935,79 +990,95 @@ export default function ListKaryawanPage() {
       </p>
 
       {loading ? (
-        <Loader2 className="animate-spin" />
+        <div className="portal-table-loading">
+          <Loader2 className="animate-spin" size={28} aria-hidden />
+          <span>Memuat daftar karyawan…</span>
+        </div>
       ) : (
-        <table className="portal-table">
-          <thead>
-            <tr>
-              <th>Foto</th>
-              <th>Nama</th>
-              <th>NIK</th>
-              <th>Posisi</th>
-              <th>Status</th>
-              <th>Disanggahkan</th>
-              <th>Aksi</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredRows.length === 0 ? (
+        <div className="portal-table-wrap">
+          <table className="portal-table portal-table-employees">
+            <thead>
               <tr>
-                <td colSpan={7} className="explore-muted">
-                  {rows.length === 0
-                    ? "Belum ada data karyawan."
-                    : "Tidak ada baris yang cocok dengan filter."}
-                </td>
+                <th scope="col">Foto</th>
+                <th scope="col">Nama</th>
+                <th scope="col">NIK</th>
+                <th scope="col">Posisi</th>
+                <th scope="col">Status</th>
+                <th scope="col">Disanggahkan</th>
+                <th scope="col" className="portal-table-col-actions">
+                  Aksi
+                </th>
               </tr>
-            ) : (
-              pageRows.map((r) => (
-                <tr
-                  key={r.id}
-                  className={r.isPending ? "portal-row-pending" : undefined}
-                >
-                  <td>
-                    {r.hasPhoto && token && !r.isPending ? (
-                      <EmployeeThumb
-                        companyId={companyId}
-                        recordId={r.id}
-                        token={token}
-                      />
-                    ) : r.isPending && r.hasPhoto ? (
-                      <span className="explore-muted" title="Foto menunggu persetujuan">
-                        Ada
-                      </span>
-                    ) : (
-                      "—"
-                    )}
+            </thead>
+            <tbody>
+              {filteredRows.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="portal-table-empty">
+                    {rows.length === 0
+                      ? "Belum ada data karyawan."
+                      : "Tidak ada baris yang cocok dengan filter."}
                   </td>
-                  <td>{r.employeeName}</td>
-                  <td>{r.nationalIdNumber ?? "—"}</td>
-                  <td>{r.position ?? "—"}</td>
-                  <td>
-                    {r.approvalState === "pending" ? (
-                      <span className="portal-badge-pending">
-                        {r.pendingAction === "BLACKLIST"
-                          ? "Menunggu persetujuan sanggahan"
-                          : r.pendingAction === "UPDATE"
-                            ? "Menunggu persetujuan (ubah data)"
-                            : "Menunggu persetujuan"}
-                      </span>
-                    ) : r.approvalState === "rejected" ? (
-                      <span className="portal-badge-rejected">Perlu revisi</span>
-                    ) : (
-                      <span className="explore-muted">Aktif</span>
-                    )}
-                  </td>
-                  <td>
-                    {r.hasBlacklist ? (
-                      <span title={r.blacklistNote ?? ""}>
-                        Aktif — catatan internal
-                      </span>
-                    ) : (
-                      "—"
-                    )}
-                  </td>
-                  <td>
-                    <div className="portal-row-actions">
+                </tr>
+              ) : (
+                pageRows.map((r) => (
+                  <tr
+                    key={r.id}
+                    className={r.isPending ? "portal-row-pending" : undefined}
+                  >
+                    <td className="portal-table-photo">
+                      {r.hasPhoto && token && !r.isPending ? (
+                        <EmployeeThumb
+                          companyId={companyId}
+                          recordId={r.id}
+                          token={token}
+                        />
+                      ) : r.isPending && r.hasPhoto ? (
+                        <span
+                          className="portal-table-photo-placeholder"
+                          title="Foto menunggu persetujuan"
+                        >
+                          Ada
+                        </span>
+                      ) : (
+                        <span className="portal-table-photo-placeholder">—</span>
+                      )}
+                    </td>
+                    <td className="portal-table-name">{r.employeeName}</td>
+                    <td className="portal-table-mono">
+                      {r.nationalIdNumber ?? "—"}
+                    </td>
+                    <td>{r.position ?? "—"}</td>
+                    <td>
+                      {r.approvalState === "pending" ? (
+                        <span className="portal-badge portal-badge-pending">
+                          {r.pendingAction === "BLACKLIST"
+                            ? "Menunggu sanggahan"
+                            : r.pendingAction === "UPDATE"
+                              ? "Menunggu ubah data"
+                              : "Menunggu persetujuan"}
+                        </span>
+                      ) : r.approvalState === "rejected" ? (
+                        <span className="portal-badge portal-badge-rejected">
+                          Perlu revisi
+                        </span>
+                      ) : (
+                        <span className="portal-badge portal-badge-ok">Aktif</span>
+                      )}
+                    </td>
+                    <td>
+                      {r.hasBlacklist ? (
+                        <span
+                          className="portal-badge portal-badge-blacklist"
+                          title={r.blacklistNote ?? ""}
+                        >
+                          Disanggahkan
+                        </span>
+                      ) : (
+                        <span className="portal-table-muted">—</span>
+                      )}
+                    </td>
+                    <td className="portal-table-col-actions">
+                      <div className="portal-row-actions">
                       <button
                         type="button"
                         className="button button-outline"
@@ -1125,11 +1196,12 @@ export default function ListKaryawanPage() {
                         )}
                     </div>
                   </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       )}
 
       {!loading && filteredRows.length > PAGE_SIZE && (
@@ -1241,8 +1313,8 @@ export default function ListKaryawanPage() {
             </header>
             <div className="portal-modal-body">
               <p className="register-hint">
-                {blMode === "admin_submit"
-                  ? "Admin mengajukan sanggahan. Pimpinan yang menyetujui sekaligus membayar lewat payment gateway."
+                {submitsSanggahanForApproval
+                  ? "Pengajuan dikirim ke pimpinan. Setelah disetujui, pimpinan melakukan transfer sesuai instruksi pembayaran."
                   : "Catatan alasan hanya untuk perusahaan Anda. Perusahaan lain hanya melihat tanda disanggahkan."}
               </p>
               <label className="portal-blacklist-field">
@@ -1257,8 +1329,19 @@ export default function ListKaryawanPage() {
                   readOnly={blNoteReadOnly}
                   disabled={blNoteReadOnly}
                 />
+                <span
+                  className={
+                    blNote.trim().length < 10
+                      ? "portal-field-hint portal-field-hint-warn"
+                      : "portal-field-hint portal-field-hint-ok"
+                  }
+                >
+                  {blNote.trim().length < 10
+                    ? `Minimal 10 karakter (kurang ${10 - blNote.trim().length})`
+                    : `${blNote.trim().length} karakter — siap dikirim`}
+                </span>
               </label>
-              {blMode !== "admin_submit" && (
+              {requiresManualBankOnSubmit && (
                 <>
                   {blFeeIdr != null && (
                     <p className="portal-fee-line">
@@ -1289,6 +1372,15 @@ export default function ListKaryawanPage() {
                       ))}
                     </select>
                   </label>
+                  <ManualBankAccountPicker
+                    accounts={manualBank.accounts}
+                    value={manualBank.selectedId}
+                    onChange={manualBank.setSelectedId}
+                    disabled={busy || manualBank.loading}
+                  />
+                  {manualBank.error ? (
+                    <p className="explore-error">{manualBank.error}</p>
+                  ) : null}
                 </>
               )}
               {error && <p className="explore-error">{error}</p>}
@@ -1296,12 +1388,17 @@ export default function ListKaryawanPage() {
                 <button
                   type="button"
                   className="button button-blue"
-                  disabled={busy || blNote.trim().length < 10}
+                  disabled={
+                    busy ||
+                    (requiresManualBankOnSubmit &&
+                      !manualBank.ready &&
+                      !manualBank.loading)
+                  }
                   onClick={() => void onBlacklist()}
                 >
                   {busy
                     ? "Memproses…"
-                    : blMode === "admin_submit"
+                    : submitsSanggahanForApproval
                       ? "Ajukan sanggahan"
                       : blMode === "leadership_approve"
                         ? "Setujui & bayar"
