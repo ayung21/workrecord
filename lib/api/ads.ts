@@ -1,4 +1,5 @@
 import { apiFetch, apiUrl } from "./client";
+import type { PaymentCheckoutResult } from "./manual-payment";
 
 /** Bentuk iklan dari API (`serializeAd` + kolom `ad_placements`). */
 export type AdPlacement = {
@@ -47,9 +48,10 @@ export function checkoutCompanyAd(
     ctaUrl?: string;
     adPackageId?: string;
     priceAmount?: number;
+    manualBankAccountId?: string;
   },
 ) {
-  return apiFetch<{ adId: string; paymentId: string; amount: number }>(
+  return apiFetch<{ adId: string } & PaymentCheckoutResult>(
     "ads/checkout",
     {
       method: "POST",
