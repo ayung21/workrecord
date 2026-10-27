@@ -12,6 +12,11 @@ import {
 } from "@/lib/api/employees";
 import { formatApiErrorMessage } from "@/lib/api/client";
 import { toDateInputValue } from "@/lib/format/date-input";
+import { DdMmYyyyDateField } from "@/components/forms/dd-mm-yyyy-date-field";
+
+function todayDateMax(): string {
+  return new Date().toISOString().slice(0, 10);
+}
 
 function fmtDate(v: string | null | undefined) {
   if (!v) return "—";
@@ -123,6 +128,8 @@ function DetailGrid({
     employeeIdNumber?: string | null;
     conductSummary?: string | null;
     rejectionReason?: string | null;
+    hasBlacklist?: boolean;
+    blacklistNote?: string | null;
   };
 }) {
   const rows = [
@@ -150,8 +157,23 @@ function DetailGrid({
           <dd>{data.rejectionReason}</dd>
         </div>
       )}
+      {(data.hasBlacklist || data.blacklistNote?.trim()) && (
+        <div className="portal-detail-blacklist">
+          <dt>Alasan sanggahan (hanya untuk perusahaan Anda)</dt>
+          <dd className="portal-detail-blacklist-text">
+            {data.blacklistNote?.trim()
+              ? data.blacklistNote
+              : "Tidak ada catatan alasan."}
+          </dd>
+        </div>
+      )}
     </dl>
   );
+}
+
+function noteFromChangePayload(payload: Record<string, unknown> | undefined) {
+  const note = payload?.note;
+  return typeof note === "string" && note.trim() ? note.trim() : null;
 }
 
 export function EmployeeDetailModal({
@@ -160,6 +182,8 @@ export function EmployeeDetailModal({
   recordId,
   requestId,
   rejectionReason,
+  hasBlacklist: hasBlacklistHint,
+  blacklistNote: blacklistNoteHint,
   onClose,
 }: {
   companyId: string;
@@ -167,6 +191,8 @@ export function EmployeeDetailModal({
   recordId?: string | null;
   requestId?: string | null;
   rejectionReason?: string | null;
+  hasBlacklist?: boolean;
+  blacklistNote?: string | null;
   onClose: () => void;
 }) {
   const [loading, setLoading] = useState(true);
@@ -198,7 +224,10 @@ export function EmployeeDetailModal({
     };
   }, [companyId, token, recordId, requestId]);
 
-  const payload = request?.payload;
+  const payload = request?.payload as Record<string, unknown> | undefined;
+  const sanggahanFromRequest =
+    request?.action === "BLACKLIST" ? noteFromChangePayload(payload) : null;
+
   const detail = record
     ? {
         employeeName: record.employeeName,
@@ -211,19 +240,33 @@ export function EmployeeDetailModal({
         employeeIdNumber: record.employeeIdNumber,
         conductSummary: record.conductSummary,
         rejectionReason: rejectionReason ?? request?.rejectionReason,
+        hasBlacklist:
+          record.hasBlacklist ??
+          record.blacklistedByViewerCompany ??
+          hasBlacklistHint ??
+          Boolean(sanggahanFromRequest),
+        blacklistNote:
+          record.blacklistNote ??
+          blacklistNoteHint ??
+          sanggahanFromRequest,
       }
     : payload
       ? {
-          employeeName: payload.employeeName,
-          nationalIdNumber: payload.nationalIdNumber,
-          placeOfBirth: payload.placeOfBirth,
-          dateOfBirth: payload.dateOfBirth,
-          position: payload.position,
-          joinedAt: payload.joinedAt,
-          leftAt: payload.leftAt,
-          employeeIdNumber: payload.employeeIdNumber ?? payload.employeeCode,
-          conductSummary: payload.conductSummary,
+          employeeName: payload.employeeName as string | undefined,
+          nationalIdNumber: payload.nationalIdNumber as string | undefined,
+          placeOfBirth: payload.placeOfBirth as string | undefined,
+          dateOfBirth: payload.dateOfBirth as string | undefined,
+          position: payload.position as string | undefined,
+          joinedAt: payload.joinedAt as string | undefined,
+          leftAt: payload.leftAt as string | undefined,
+          employeeIdNumber: (payload.employeeIdNumber ?? payload.employeeCode) as
+            | string
+            | undefined,
+          conductSummary: payload.conductSummary as string | undefined,
           rejectionReason: rejectionReason ?? request?.rejectionReason,
+          hasBlacklist:
+            hasBlacklistHint ?? request?.action === "BLACKLIST",
+          blacklistNote: blacklistNoteHint ?? sanggahanFromRequest,
         }
       : null;
 
@@ -353,26 +396,37 @@ export function EmployeeEditModal({
         </label>
         <label>
           <span>Tanggal lahir</span>
-          <input
-            type="date"
+          <DdMmYyyyDateField
             value={form.dateOfBirth ?? ""}
-            onChange={(e) => setForm((f) => ({ ...f, dateOfBirth: e.target.value }))}
+            max={todayDateMax()}
+            elevatePopover
+            onChange={(iso) =>
+              setForm((f) => ({ ...f, dateOfBirth: iso || undefined }))
+            }
           />
         </label>
         <label>
           <span>Mulai bekerja</span>
-          <input
-            type="date"
+          <DdMmYyyyDateField
             value={form.joinedAt ?? ""}
-            onChange={(e) => setForm((f) => ({ ...f, joinedAt: e.target.value }))}
+            max={todayDateMax()}
+            min={form.dateOfBirth || undefined}
+            elevatePopover
+            onChange={(iso) =>
+              setForm((f) => ({ ...f, joinedAt: iso || undefined }))
+            }
           />
         </label>
         <label>
           <span>Selesai</span>
-          <input
-            type="date"
+          <DdMmYyyyDateField
             value={form.leftAt ?? ""}
-            onChange={(e) => setForm((f) => ({ ...f, leftAt: e.target.value }))}
+            max={todayDateMax()}
+            min={form.joinedAt || undefined}
+            elevatePopover
+            onChange={(iso) =>
+              setForm((f) => ({ ...f, leftAt: iso || undefined }))
+            }
           />
         </label>
         <label>

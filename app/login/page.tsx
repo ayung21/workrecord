@@ -3,7 +3,8 @@
 import Link from "@/components/app-link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-import { ArrowUpRight, Loader2, Mail, KeyRound } from "lucide-react";
+import { ArrowUpRight, Loader2, Mail } from "lucide-react";
+import { PasswordInput } from "@/components/auth/password-input";
 import { AuthFormLogo } from "@/components/auth/auth-form-logo";
 import { ApiRequestError } from "@/lib/api/client";
 import { login } from "@/lib/api/auth";
@@ -27,6 +28,8 @@ const copy = {
     already: "Anda sudah masuk.",
     continue: "Lanjutkan",
     forgotLink: "Lupa password?",
+    showPassword: "Tampilkan kata sandi",
+    hidePassword: "Sembunyikan kata sandi",
     noAccount: "Belum punya akun?",
     register: "Daftarkan perusahaan",
   },
@@ -44,6 +47,8 @@ const copy = {
     already: "You are already signed in.",
     continue: "Continue",
     forgotLink: "Forgot password?",
+    showPassword: "Show password",
+    hidePassword: "Hide password",
     noAccount: "No account yet?",
     register: "Register your company",
   },
@@ -143,16 +148,14 @@ function LoginForm() {
                     {t.forgotLink}
                   </Link>
                 </span>
-                <span className="auth-input-wrap">
-                  <KeyRound size={18} className="auth-input-icon" aria-hidden />
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    autoComplete="current-password"
-                    required
-                  />
-                </span>
+                <PasswordInput
+                  value={password}
+                  onChange={setPassword}
+                  autoComplete="current-password"
+                  required
+                  showLabel={t.showPassword}
+                  hideLabel={t.hidePassword}
+                />
               </label>
               {error && (
                 <p className="auth-alert auth-alert-error" role="alert">
