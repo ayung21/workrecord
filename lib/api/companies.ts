@@ -53,6 +53,7 @@ export function createDisputeCheckout(
   input: {
     email: string;
     employeeRecordId?: string;
+    voucherCode?: string;
     manualBankAccountId?: string;
   },
 ) {

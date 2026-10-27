@@ -42,6 +42,7 @@ import { formatApiErrorMessage } from "@/lib/api/client";
 import { fetchPricingCatalog } from "@/lib/api/pricing";
 import {
   listAvailableVouchers,
+  quoteVoucher,
   type CompanyVoucherOption,
 } from "@/lib/api/vouchers";
 import { toDateInputValue } from "@/lib/format/date-input";
@@ -207,6 +208,16 @@ export default function ListKaryawanPage() {
   const [blVoucherOptions, setBlVoucherOptions] = useState<
     CompanyVoucherOption[]
   >([]);
+  const [blVoucherLoadIssue, setBlVoucherLoadIssue] = useState<string | null>(
+    null,
+  );
+  const [blVoucherQuote, setBlVoucherQuote] = useState<{
+    finalAmount: number;
+    discountAmount: number;
+  } | null>(null);
+  const [blVoucherQuoteError, setBlVoucherQuoteError] = useState<string | null>(
+    null,
+  );
   const [busy, setBusy] = useState(false);
   const [page, setPage] = useState(1);
 
@@ -223,9 +234,12 @@ export default function ListKaryawanPage() {
     (blMode === "leadership_pay" && isLeadership);
 
   useEffect(() => {
-    if (!blRecordId || !token || blMode === "admin_submit") {
+    if (!blRecordId || !token) {
       setBlVoucherOptions([]);
       setBlFeeIdr(null);
+      setBlVoucherLoadIssue(null);
+      setBlVoucherQuote(null);
+      setBlVoucherQuoteError(null);
       return;
     }
     let cancelled = false;
@@ -242,17 +256,67 @@ export default function ListKaryawanPage() {
             null,
         );
         setBlVoucherOptions(vouchers);
-      } catch {
+        setBlVoucherLoadIssue(null);
+      } catch (err) {
         if (!cancelled) {
           setBlFeeIdr(null);
           setBlVoucherOptions([]);
+          setBlVoucherLoadIssue(
+            err instanceof Error
+              ? err.message
+              : "Gagal memuat daftar voucher.",
+          );
         }
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [blRecordId, token, blMode]);
+  }, [blRecordId, token]);
+
+  useEffect(() => {
+    if (!blRecordId || blFeeIdr == null) {
+      setBlVoucherQuote(null);
+      setBlVoucherQuoteError(null);
+      return;
+    }
+    const code = blVoucher.trim();
+    if (!code) {
+      setBlVoucherQuote(null);
+      setBlVoucherQuoteError(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const q = await quoteVoucher({
+          code,
+          appliesTo: "BLACKLIST",
+          amount: blFeeIdr,
+          companyId: companyId || undefined,
+        });
+        if (cancelled) return;
+        setBlVoucherQuote({
+          finalAmount: q.finalAmount,
+          discountAmount: q.discountAmount,
+        });
+        setBlVoucherQuoteError(null);
+      } catch (err) {
+        if (cancelled) return;
+        setBlVoucherQuote(null);
+        setBlVoucherQuoteError(
+          formatApiErrorMessage(err) || "Voucher tidak dapat dipakai.",
+        );
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [blVoucher, blFeeIdr, blRecordId, companyId]);
+
+  const showSanggahanFeeAndVoucher =
+    Boolean(blRecordId) &&
+    (requiresManualBankOnSubmit || blMode === "admin_submit");
 
   const [detailRow, setDetailRow] = useState<Row | null>(null);
   const [historyRow, setHistoryRow] = useState<Row | null>(null);
@@ -551,6 +615,8 @@ export default function ListKaryawanPage() {
     setBlEmployeeName("");
     setBlNote("");
     setBlVoucher("");
+    setBlVoucherQuote(null);
+    setBlVoucherQuoteError(null);
   };
 
   const openBlacklistModal = (row: Row) => {
@@ -559,6 +625,8 @@ export default function ListKaryawanPage() {
     setBlEmployeeName(row.employeeName);
     setBlNote("");
     setBlVoucher("");
+    setBlVoucherQuote(null);
+    setBlVoucherQuoteError(null);
     setBlNoteReadOnly(false);
     setBlMode(isAdmin && !isLeadership ? "admin_submit" : "leadership_pay");
     setError(null);
@@ -569,7 +637,13 @@ export default function ListKaryawanPage() {
     setBlRequestId(row.requestId ?? null);
     setBlEmployeeName(row.employeeName);
     setBlNote(row.requestSnapshot?.payload?.note ?? "");
-    setBlVoucher("");
+    const savedVoucher =
+      typeof row.requestSnapshot?.payload?.voucherCode === "string"
+        ? row.requestSnapshot.payload.voucherCode
+        : "";
+    setBlVoucher(savedVoucher);
+    setBlVoucherQuote(null);
+    setBlVoucherQuoteError(null);
     setBlNoteReadOnly(true);
     setBlMode("leadership_approve");
     setError(null);
@@ -604,6 +678,14 @@ export default function ListKaryawanPage() {
         setError(bankErr);
         return;
       }
+    }
+    if (blVoucher.trim() && blVoucherQuoteError) {
+      setError(blVoucherQuoteError);
+      return;
+    }
+    if (blVoucher.trim() && !blVoucherQuote) {
+      setError("Menghitung diskon voucher… tunggu sebentar lalu coba lagi.");
+      return;
     }
     setBusy(true);
     setError(null);
@@ -1455,14 +1537,30 @@ export default function ListKaryawanPage() {
                     : `${blNote.trim().length} karakter — siap dikirim`}
                 </span>
               </label>
-              {requiresManualBankOnSubmit && (
+              {showSanggahanFeeAndVoucher && (
                 <>
                   {blFeeIdr != null && (
                     <p className="portal-fee-line">
                       Biaya sanggahan karyawan:{" "}
-                      <strong>
-                        Rp {blFeeIdr.toLocaleString("id-ID")}
-                      </strong>
+                      {blVoucherQuote && blVoucherQuote.discountAmount > 0 ? (
+                        <>
+                          <s>Rp {blFeeIdr.toLocaleString("id-ID")}</s>{" "}
+                          <strong>
+                            Rp{" "}
+                            {blVoucherQuote.finalAmount.toLocaleString("id-ID")}
+                          </strong>
+                          <span className="portal-field-hint">
+                            {" "}
+                            (hemat Rp{" "}
+                            {blVoucherQuote.discountAmount.toLocaleString(
+                              "id-ID",
+                            )}
+                            )
+                          </span>
+                        </>
+                      ) : (
+                        <strong>Rp {blFeeIdr.toLocaleString("id-ID")}</strong>
+                      )}
                     </p>
                   )}
                   <label className="portal-blacklist-field">
@@ -1485,7 +1583,28 @@ export default function ListKaryawanPage() {
                         </option>
                       ))}
                     </select>
+                    {blVoucherQuoteError ? (
+                      <span className="portal-field-hint portal-field-hint-warn">
+                        {blVoucherQuoteError}
+                      </span>
+                    ) : null}
+                    {blVoucherLoadIssue ? (
+                      <span className="portal-field-hint portal-field-hint-warn">
+                        Voucher tidak dapat dimuat: {blVoucherLoadIssue}
+                      </span>
+                    ) : blVoucherOptions.length === 0 ? (
+                      <span className="portal-field-hint">
+                        Tidak ada voucher yang bisa dipakai untuk PT ini (belum
+                        dibuat, sudah kedaluwarsa, kuota habis, atau PT belum
+                        masuk daftar eligibilitas). Minta Owner periksa menu
+                        voucher &quot;Sanggahan karyawan&quot;.
+                      </span>
+                    ) : null}
                   </label>
+                </>
+              )}
+              {requiresManualBankOnSubmit && (
+                <>
                   <ManualBankAccountPicker
                     accounts={manualBank.accounts}
                     value={manualBank.selectedId}

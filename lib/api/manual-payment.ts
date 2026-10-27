@@ -24,6 +24,8 @@ export type PaymentCheckoutResult = {
   paymentId: string;
   amount: number;
   originalAmount?: number;
+  discountedAmount?: number;
+  discountAmount?: number;
   redirectUrl?: string;
   manualTransfer?: ManualTransferInfo;
 };
