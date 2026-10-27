@@ -1,7 +1,18 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ImagePlus, Loader2, X } from "lucide-react";
+import {
+  Check,
+  Eye,
+  History,
+  ImagePlus,
+  Loader2,
+  Pencil,
+  RotateCcw,
+  ShieldAlert,
+  X,
+  XCircle,
+} from "lucide-react";
 import Swal from "sweetalert2";
 import { PortalShell } from "@/components/company/portal-shell";
 import { readSession } from "@/lib/auth/session";
@@ -34,6 +45,7 @@ import {
   type CompanyVoucherOption,
 } from "@/lib/api/vouchers";
 import { toDateInputValue } from "@/lib/format/date-input";
+import { DdMmYyyyDateField } from "@/components/forms/dd-mm-yyyy-date-field";
 import {
   EmployeeDetailModal,
   EmployeeEditModal,
@@ -41,6 +53,47 @@ import {
 } from "@/components/company/employee-portal-modals";
 
 const PAGE_SIZE = 10;
+
+const listSwal = Swal.mixin({
+  scrollbarPadding: false,
+  confirmButtonColor: "#2459df",
+});
+
+function todayDateMax(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+function validateEmployeeDates(form: {
+  dateOfBirth: string;
+  joinedAt: string;
+  leftAt: string;
+}): string | null {
+  if (!ISO_DATE.test(form.dateOfBirth)) {
+    return "Tanggal lahir belum valid. Gunakan DD/MM/YYYY atau tombol kalender.";
+  }
+  if (!ISO_DATE.test(form.joinedAt)) {
+    return "Tanggal mulai bekerja belum valid. Gunakan DD/MM/YYYY atau tombol kalender.";
+  }
+  if (form.leftAt && !ISO_DATE.test(form.leftAt)) {
+    return "Tanggal selesai belum valid. Gunakan DD/MM/YYYY atau tombol kalender.";
+  }
+  const today = todayDateMax();
+  if (form.dateOfBirth && form.dateOfBirth > today) {
+    return "Tanggal lahir tidak boleh di masa depan.";
+  }
+  if (form.joinedAt && form.joinedAt > today) {
+    return "Tanggal mulai bekerja tidak boleh di masa depan.";
+  }
+  if (form.leftAt && form.joinedAt && form.leftAt < form.joinedAt) {
+    return "Tanggal selesai harus sama atau setelah tanggal mulai bekerja.";
+  }
+  if (form.dateOfBirth && form.joinedAt && form.dateOfBirth >= form.joinedAt) {
+    return "Tanggal lahir harus sebelum tanggal mulai bekerja.";
+  }
+  return null;
+}
 
 type ApprovalState = "none" | "pending" | "rejected";
 
@@ -128,6 +181,9 @@ export default function ListKaryawanPage() {
   const [photoInputKey, setPhotoInputKey] = useState(0);
   const [photoDragOver, setPhotoDragOver] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
+  const photoFieldRef = useRef<HTMLDivElement>(null);
+  const [photoInvalid, setPhotoInvalid] = useState(false);
+  const maxDateToday = useMemo(() => todayDateMax(), []);
   const [form, setForm] = useState({
     nationalIdNumber: "",
     employeeName: "",
@@ -269,6 +325,7 @@ export default function ListKaryawanPage() {
       return;
     }
     setPhotoFile(file);
+    setPhotoInvalid(false);
     setError(null);
   };
 
@@ -412,12 +469,24 @@ export default function ListKaryawanPage() {
   const clearPhotoSelection = () => {
     setPhotoFile(null);
     setPhotoPreviewUrl(null);
+    setPhotoInvalid(false);
   };
 
   const onAdd = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!token || !companyId || !photoFile) {
+    if (!token || !companyId) return;
+    const dateErr = validateEmployeeDates(form);
+    if (dateErr) {
+      setError(dateErr);
+      return;
+    }
+    if (!photoFile) {
+      setPhotoInvalid(true);
       setError("Foto karyawan wajib diunggah.");
+      photoFieldRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
       return;
     }
     if (!form.position.trim()) {
@@ -450,7 +519,7 @@ export default function ListKaryawanPage() {
       });
       await reload();
       if (isPendingEmployeeCreate(result)) {
-        await Swal.fire({
+        await listSwal.fire({
           icon: "info",
           title: "Menunggu persetujuan",
           text:
@@ -459,7 +528,7 @@ export default function ListKaryawanPage() {
           confirmButtonColor: "#2459df",
         });
       } else {
-        await Swal.fire({
+        await listSwal.fire({
           icon: "success",
           title: "Tersimpan",
           text: "Data karyawan berhasil ditambahkan.",
@@ -520,7 +589,7 @@ export default function ListKaryawanPage() {
     }
     const note = blNote.trim();
     if (note.length < 10) {
-      await Swal.fire({
+      await listSwal.fire({
         icon: "warning",
         title: "Alasan terlalu singkat",
         text: `Isi alasan sanggahan minimal 10 karakter (saat ini ${note.length}).`,
@@ -557,7 +626,7 @@ export default function ListKaryawanPage() {
             );
             return;
           }
-          await Swal.fire({
+          await listSwal.fire({
             icon: "success",
             title: "Disanggahkan",
             text: "Pengajuan disetujui dan pembayaran selesai.",
@@ -585,7 +654,7 @@ export default function ListKaryawanPage() {
       if (result.mode === "PENDING_APPROVAL") {
         closeBlacklistModal();
         await reload();
-        await Swal.fire({
+        await listSwal.fire({
           icon: "info",
           title: "Menunggu pimpinan",
           text:
@@ -606,7 +675,7 @@ export default function ListKaryawanPage() {
         );
         return;
       }
-      await Swal.fire({
+      await listSwal.fire({
         icon: "success",
         title: "Disanggahkan",
         text: "Pembayaran selesai. Karyawan ditandai disanggahkan untuk perusahaan Anda.",
@@ -621,7 +690,7 @@ export default function ListKaryawanPage() {
 
   const onRejectBlacklist = async (requestId: string) => {
     if (!token) return;
-    const result = await Swal.fire({
+    const result = await listSwal.fire({
       title: "Tolak pengajuan sanggahan",
       input: "textarea",
       inputLabel: "Alasan penolakan (min. 5 karakter)",
@@ -641,7 +710,7 @@ export default function ListKaryawanPage() {
     try {
       await rejectBlacklistRequest(token, requestId, result.value.trim());
       await reload();
-      await Swal.fire({
+      await listSwal.fire({
         icon: "info",
         title: "Ditolak",
         text: "Admin dapat mengajukan ulang jika perlu.",
@@ -656,7 +725,7 @@ export default function ListKaryawanPage() {
 
   const onRejectPending = async (requestId: string) => {
     if (!token || !companyId) return;
-    const result = await Swal.fire({
+    const result = await listSwal.fire({
       title: "Tolak pengajuan",
       input: "textarea",
       inputLabel: "Alasan penolakan (min. 5 karakter)",
@@ -684,7 +753,7 @@ export default function ListKaryawanPage() {
         result.value.trim(),
       );
       await reload();
-      await Swal.fire({
+      await listSwal.fire({
         icon: "info",
         title: "Ditolak",
         text: "Admin perlu merevisi data sesuai catatan Anda.",
@@ -745,7 +814,7 @@ export default function ListKaryawanPage() {
     try {
       await approveEmployeeRequest(companyId, token, requestId);
       await reload();
-      await Swal.fire({
+      await listSwal.fire({
         icon: "success",
         title: "Disetujui",
         text: "Karyawan sekarang aktif di daftar.",
@@ -824,38 +893,20 @@ export default function ListKaryawanPage() {
           </label>
           <label>
             <span>Tanggal lahir</span>
-            <input
-              type="date"
+            <DdMmYyyyDateField
               value={form.dateOfBirth}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, dateOfBirth: e.target.value }))
-              }
+              max={maxDateToday}
               required
-            />
-          </label>
-          <label>
-            <span>Mulai bekerja</span>
-            <input
-              type="date"
-              value={form.joinedAt}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, joinedAt: e.target.value }))
-              }
-              required
-            />
-          </label>
-          <label>
-            <span>Selesai (kosongkan jika masih aktif)</span>
-            <input
-              type="date"
-              value={form.leftAt}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, leftAt: e.target.value }))
+              onChange={(iso) =>
+                setForm((f) => ({ ...f, dateOfBirth: iso }))
               }
             />
+            <span className="register-field-hint">
+              DD/MM/YYYY atau kalender
+            </span>
           </label>
-          <label>
-            <span>Posisi / jabatan sebagai</span>
+          <label className="register-grid-row2-start">
+            <span>Posisi / jabatan</span>
             <input
               value={form.position}
               onChange={(e) =>
@@ -866,16 +917,46 @@ export default function ListKaryawanPage() {
               minLength={2}
             />
           </label>
-          <div className="employee-photo-field">
-            <span className="employee-photo-label">Foto karyawan</span>
+          <label>
+            <span>Mulai bekerja</span>
+            <DdMmYyyyDateField
+              value={form.joinedAt}
+              max={maxDateToday}
+              min={form.dateOfBirth || undefined}
+              required
+              onChange={(iso) =>
+                setForm((f) => ({ ...f, joinedAt: iso }))
+              }
+            />
+            <span className="register-field-hint">
+              Tanggal mulai di perusahaan Anda
+            </span>
+          </label>
+          <label>
+            <span>Selesai bekerja</span>
+            <DdMmYyyyDateField
+              value={form.leftAt}
+              max={maxDateToday}
+              min={form.joinedAt || undefined}
+              onChange={(iso) => setForm((f) => ({ ...f, leftAt: iso }))}
+            />
+            <span className="register-field-hint">
+              Kosongkan jika masih aktif
+            </span>
+          </label>
+          <div
+            ref={photoFieldRef}
+            className={`employee-photo-field${photoInvalid ? " is-invalid" : ""}`}
+          >
+            <span className="employee-photo-label">Foto karyawan (wajib)</span>
             <input
               key={photoInputKey}
               ref={photoInputRef}
               className="employee-photo-upload-input"
               type="file"
               accept="image/jpeg,image/png,image/webp"
-              required={!photoFile}
               tabIndex={-1}
+              aria-hidden
               onChange={(e) => pickPhotoFile(e.target.files?.[0])}
             />
             <div
@@ -928,19 +1009,33 @@ export default function ListKaryawanPage() {
                 </>
               )}
             </div>
+            {photoInvalid ? (
+              <p className="employee-photo-field-error" role="alert">
+                Unggah foto terlebih dahulu (JPG, PNG, atau WEBP).
+              </p>
+            ) : null}
           </div>
-          <button
-            type="submit"
-            className="button button-blue register-full"
-            disabled={busy}
-          >
-            Simpan karyawan
-          </button>
+          <div className="register-form-actions">
+            <button
+              type="submit"
+              className="button button-blue"
+              disabled={busy}
+            >
+              {busy ? "Menyimpan…" : "Simpan karyawan"}
+            </button>
+            <span className="register-field-hint">
+              Periksa tanggal dan foto sebelum menyimpan.
+            </span>
+          </div>
         </form>
       </section>
 
       {error && <p className="explore-error">{error}</p>}
 
+      <section className="portal-table-section" aria-labelledby="employee-list-heading">
+        <div className="portal-table-section-head">
+          <h2 id="employee-list-heading">Daftar karyawan</h2>
+        </div>
       <div className="portal-list-filters">
         <label>
           <span>Cari nama / NIK / posisi</span>
@@ -1078,12 +1173,13 @@ export default function ListKaryawanPage() {
                       )}
                     </td>
                     <td className="portal-table-col-actions">
-                      <div className="portal-row-actions">
+                      <div className="portal-row-actions" role="group" aria-label="Tindakan baris">
                       <button
                         type="button"
-                        className="button button-outline"
+                        className="portal-action-btn"
                         onClick={() => setDetailRow(r)}
                       >
+                        <Eye size={14} aria-hidden />
                         Detail
                       </button>
                       {(r.changeRevisionCount ?? 0) > 0 ||
@@ -1092,9 +1188,10 @@ export default function ListKaryawanPage() {
                         r.approvalState !== "pending") ? (
                         <button
                           type="button"
-                          className="button button-outline"
+                          className="portal-action-btn"
                           onClick={() => setHistoryRow(r)}
                         >
+                          <History size={14} aria-hidden />
                           Riwayat
                           {(r.changeRevisionCount ?? 0) > 0
                             ? ` (${r.changeRevisionCount})`
@@ -1106,9 +1203,10 @@ export default function ListKaryawanPage() {
                         r.pendingAction === "CREATE" && (
                           <button
                             type="button"
-                            className="button button-outline"
+                            className="portal-action-btn"
                             onClick={() => prefillFromRejected(r)}
                           >
+                            <RotateCcw size={14} aria-hidden />
                             Perbaiki
                           </button>
                         )}
@@ -1117,10 +1215,11 @@ export default function ListKaryawanPage() {
                         r.approvalState !== "pending" && (
                           <button
                             type="button"
-                            className="button button-outline"
+                            className="portal-action-btn"
                             disabled={busy}
                             onClick={() => void openEdit(r)}
                           >
+                            <Pencil size={14} aria-hidden />
                             Edit
                           </button>
                         )}
@@ -1131,18 +1230,20 @@ export default function ListKaryawanPage() {
                           <>
                             <button
                               type="button"
-                              className="button button-blue"
+                              className="portal-action-btn portal-action-btn--primary"
                               disabled={busy}
                               onClick={() => openApproveBlacklistModal(r)}
                             >
+                              <Check size={14} aria-hidden />
                               Setujui &amp; bayar
                             </button>
                             <button
                               type="button"
-                              className="button button-outline"
+                              className="portal-action-btn portal-action-btn--danger"
                               disabled={busy}
                               onClick={() => void onRejectBlacklist(r.requestId!)}
                             >
+                              <XCircle size={14} aria-hidden />
                               Tolak
                             </button>
                           </>
@@ -1154,18 +1255,20 @@ export default function ListKaryawanPage() {
                           <>
                             <button
                               type="button"
-                              className="button button-blue"
+                              className="portal-action-btn portal-action-btn--primary"
                               disabled={busy}
                               onClick={() => void onApprovePending(r.requestId!)}
                             >
+                              <Check size={14} aria-hidden />
                               Setujui
                             </button>
                             <button
                               type="button"
-                              className="button button-outline"
+                              className="portal-action-btn portal-action-btn--danger"
                               disabled={busy}
                               onClick={() => void onRejectPending(r.requestId!)}
                             >
+                              <XCircle size={14} aria-hidden />
                               Tolak
                             </button>
                           </>
@@ -1175,9 +1278,10 @@ export default function ListKaryawanPage() {
                         !r.hasBlacklist && (
                           <button
                             type="button"
-                            className="button button-outline"
+                            className="portal-action-btn"
                             onClick={() => openBlacklistModal(r)}
                           >
+                            <ShieldAlert size={14} aria-hidden />
                             Sanggahkan
                           </button>
                         )}
@@ -1187,10 +1291,11 @@ export default function ListKaryawanPage() {
                         r.blacklistId && (
                           <button
                             type="button"
-                            className="button button-outline"
+                            className="portal-action-btn portal-action-btn--danger"
                             disabled={busy}
                             onClick={() => onCancelBl(r.blacklistId!)}
                           >
+                            <X size={14} aria-hidden />
                             Tarik sanggahan
                           </button>
                         )}
@@ -1232,6 +1337,7 @@ export default function ListKaryawanPage() {
           </div>
         </nav>
       )}
+      </section>
 
       {detailRow && (
         <EmployeeDetailModal
@@ -1242,6 +1348,14 @@ export default function ListKaryawanPage() {
           }
           requestId={detailRow.requestId}
           rejectionReason={detailRow.rejectionReason}
+          hasBlacklist={
+            detailRow.hasBlacklist || detailRow.pendingAction === "BLACKLIST"
+          }
+          blacklistNote={
+            detailRow.blacklistNote ??
+            (detailRow.requestSnapshot?.payload?.note as string | undefined) ??
+            null
+          }
           onClose={() => setDetailRow(null)}
         />
       )}
@@ -1256,7 +1370,7 @@ export default function ListKaryawanPage() {
           onSaved={async () => {
             await reload();
             if (editCtx.requiresApproval) {
-              await Swal.fire({
+              await listSwal.fire({
                 icon: "info",
                 title: "Pengajuan perubahan",
                 text:
@@ -1264,7 +1378,7 @@ export default function ListKaryawanPage() {
                 confirmButtonColor: "#2459df",
               });
             } else {
-              await Swal.fire({
+              await listSwal.fire({
                 icon: "success",
                 title: "Tersimpan",
                 text: "Data karyawan berhasil diperbarui.",
