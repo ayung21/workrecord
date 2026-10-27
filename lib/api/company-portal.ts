@@ -222,15 +222,30 @@ export async function fetchPortalEmployeeList(
   }
 }
 
+export type DisputeReportRow = {
+  id: string;
+  status: string;
+  description: string;
+  employeeRecordId: string | null;
+  employeeName: string | null;
+  nationalIdNumber: string;
+  position: string | null;
+  paymentId: string;
+  paymentStatus: string | null;
+  amountIdr: number;
+  createdAt: string;
+};
+
+export type DisputeReport = {
+  totalSpent: number;
+  totalSanggahan: number;
+  activeSanggahan: number;
+  currency: string;
+  disputes: DisputeReportRow[];
+};
+
 export function fetchDisputeReport(companyId: string, token: string) {
-  return apiFetch<{
-    totalSpent: number;
-    currency: string;
-    disputes: {
-      id: string;
-      status: string;
-      description: string;
-      createdAt: string;
-    }[];
-  }>(`companies/${companyId}/dispute-report`, { token });
+  return apiFetch<DisputeReport>(`companies/${companyId}/dispute-report`, {
+    token,
+  });
 }
