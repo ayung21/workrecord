@@ -35,6 +35,7 @@ export type RegisterCompanyResponse = {
   partnerPublicId: string;
   primaryRole: string;
   partnerRole: string;
+  partnerEmail: string;
   message: string;
 };
 

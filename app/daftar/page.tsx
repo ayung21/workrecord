@@ -23,6 +23,7 @@ import {
   companyTermsSections,
   companyTermsTitle,
 } from "@/lib/content/company-terms-id";
+import Swal from "sweetalert2";
 import { AuthBackLink } from "@/components/auth/auth-back-link";
 import { AuthFormLogo } from "@/components/auth/auth-form-logo";
 import { AuthPageShell } from "@/components/auth/auth-page-shell";
@@ -33,10 +34,10 @@ const copy = {
     subtitle:
       "Setelah mengisi data, Anda akan diarahkan ke pembayaran langganan. Wajib mendaftarkan akun kedua (Admin atau Master) sesuai peran.",
     company: "Data perusahaan",
-    payer: "Akun Anda (pembayar langganan)",
+    payer: "Akun Utama Anda",
     partner: "Akun kedua untuk login WorkRecord",
     partnerHint:
-      "Pilih peran akun kedua. Peran Anda sebagai pembayar otomatis menjadi kebalikannya.",
+      "Pilih peran akun kedua. Setelah pendaftaran, email akun kedua akan menerima tautan untuk mengatur kata sandi (halaman aktivasi).",
     atasan: "Atasan (Master)",
     bawahan: "Bawahan (Admin)",
     yourRole: "Peran Anda otomatis:",
@@ -60,7 +61,7 @@ const copy = {
     payer: "Your account (subscription payer)",
     partner: "Second WorkRecord login account",
     partnerHint:
-      "Choose the second account’s role. Your role as payer is assigned automatically as the opposite.",
+      "Choose the second account’s role. After registration, the second email will receive a link to set their password.",
     atasan: "Supervisor (Master)",
     bawahan: "Subordinate (Admin)",
     yourRole: "Your role:",
@@ -120,7 +121,8 @@ export default function DaftarPage() {
     setLoading(true);
     setError(null);
     try {
-      await registerCompany({
+      const partnerEmailTrimmed = partnerEmail.trim();
+      const result = await registerCompany({
         companyName: companyName.trim(),
         companyPhone: companyPhone.trim(),
         fullName: fullName.trim(),
@@ -129,7 +131,7 @@ export default function DaftarPage() {
         personalPhone: personalPhone.trim(),
         partnerAccount: {
           fullName: partnerName.trim(),
-          email: partnerEmail.trim(),
+          email: partnerEmailTrimmed,
           personalPhone: partnerPhone.trim(),
           relationRole,
         },
@@ -139,6 +141,17 @@ export default function DaftarPage() {
           masterResponsibility: c3,
           termsAndPrivacy: c4,
         },
+      });
+
+      await Swal.fire({
+        icon: "success",
+        title: lang === "id" ? "Pendaftaran berhasil" : "Registration complete",
+        html:
+          lang === "id"
+            ? `<p style="margin:0 0 12px;line-height:1.6">${result.message}</p><p style="margin:0;font-size:14px;color:#475569">Minta rekan memeriksa inbox dan folder spam, lalu buka tautan <strong>Atur kata sandi</strong> sebelum login.</p>`
+            : `<p style="margin:0 0 12px;line-height:1.6">${result.message}</p><p style="margin:0;font-size:14px;color:#475569">Ask them to check inbox/spam for the password setup link before signing in.</p>`,
+        confirmButtonText: lang === "id" ? "Lanjut login" : "Continue to sign in",
+        confirmButtonColor: "#2459df",
       });
 
       router.push("/login?returnTo=/perusahaan/verifikasi");

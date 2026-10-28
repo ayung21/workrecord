@@ -260,19 +260,21 @@
 .register-card{margin-top:20px}
 .register-form{display:grid;gap:20px}
 .register-section-card{padding:20px 22px;border:1px solid #e8edf4;border-radius:14px;background:linear-gradient(180deg,#fafbfd 0%,#fff 100%)}
-.register-section-card h2{display:flex;align-items:center;gap:10px;margin:0 0 16px;font-size:15px;font-weight:650;color:var(--navy)}
+.register-section-card h2{display:flex;align-items:center;gap:10px;margin:0 0 16px;font-family:"Inter",Arial,Helvetica,sans-serif;font-size:16px;font-weight:600;line-height:1.4;letter-spacing:0;color:var(--navy)}
 .register-section-icon{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:#eff4ff;color:var(--blue);flex-shrink:0}
 .register-section h2{display:flex;align-items:center;gap:8px;margin:0 0 14px;font-size:15px;font-weight:650;color:var(--navy)}
-.register-grid .auth-field input:not(.auth-input-wrap input){width:100%;padding:14px 16px;border:1px solid #dbe2eb;border-radius:10px;font:inherit;font-size:14px;background:#fff}
-.register-grid .auth-field input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 4px #4877eb28}
+.register-grid .auth-field > input{width:100%;padding:14px 16px;border:1px solid #dbe2eb;border-radius:10px;font:inherit;font-size:14px;background:#fff}
+.register-grid .auth-field > input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 4px #4877eb28}
+.register-grid .auth-field .auth-input-wrap input{width:100%;padding:14px 16px 14px 44px;border:1px solid #dbe2eb;border-radius:10px;font:inherit;font-size:14px;background:#fff}
+.register-grid .auth-field .auth-input-wrap input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 4px #4877eb28;background:#fff}
 .role-pick{display:grid;gap:10px;margin-bottom:12px}
 .register-grid{display:grid;gap:14px;grid-template-columns:1fr 1fr}
 .register-grid-employee{grid-template-columns:repeat(4,minmax(0,1fr));align-items:start}
 .register-grid-employee .register-grid-row2-start{grid-column:1}
 .register-grid label{display:grid;gap:8px;font-size:12px;font-weight:600;color:#52617c}
-.register-grid input{width:100%;padding:12px 14px;border:1px solid #dbe2eb;border-radius:8px;font:inherit;font-size:14px}
-.register-grid input:focus{outline:3px solid #4877eb33;border-color:var(--blue)}
-.register-grid input.input-date{font-variant-numeric:tabular-nums;min-height:44px;color-scheme:light}
+.register-grid label > input{width:100%;padding:12px 14px;border:1px solid #dbe2eb;border-radius:8px;font:inherit;font-size:14px}
+.register-grid label > input:focus{outline:3px solid #4877eb33;border-color:var(--blue)}
+.register-grid label > input.input-date{font-variant-numeric:tabular-nums;min-height:44px;color-scheme:light}
 .date-ddmmyyyy-field{display:grid;gap:6px}
 .date-ddmmyyyy-wrap{display:flex;align-items:stretch;gap:0;position:relative}
 .date-ddmmyyyy-text{flex:1;min-width:0;border-top-right-radius:0!important;border-bottom-right-radius:0!important}
