@@ -32,6 +32,16 @@
 .portal-modal-close{border:0;background:transparent;padding:6px;border-radius:8px;color:#64748b;cursor:pointer}
 .portal-modal-close:hover{background:#f1f5f9}
 .portal-modal-body{padding:20px}
+.portal-settings-card{margin-top:20px;max-width:720px}
+.portal-settings-readonly{display:grid;gap:12px;margin:0 0 20px;padding:0 0 16px;border-bottom:1px solid #e8edf4}
+.portal-settings-readonly > div{display:grid;gap:4px}
+.portal-settings-readonly dt{margin:0;font-size:11px;font-weight:650;text-transform:uppercase;letter-spacing:.04em;color:#64748b}
+.portal-settings-readonly dd{margin:0;font-size:15px;font-weight:550;color:var(--navy)}
+.portal-loading-inline{display:inline-flex;align-items:center;gap:8px;margin-top:12px}
+.portal-modal-form{grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}
+.portal-modal-form label > input[type="file"]{padding:10px 12px;font-size:13px;background:#f8fafc;cursor:pointer}
+.portal-modal-form .register-form-actions{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:4px}
+@media(max-width:640px){.portal-modal-form{grid-template-columns:1fr}}
 .portal-detail-layout{display:grid;gap:20px;grid-template-columns:auto 1fr;align-items:start}
 .nik-search-result{margin-top:24px;display:grid;gap:20px}
 .nik-search-profile{padding:24px}
@@ -274,7 +284,16 @@
 .register-grid label{display:grid;gap:8px;font-size:12px;font-weight:600;color:#52617c}
 .register-grid label > input{width:100%;padding:12px 14px;border:1px solid #dbe2eb;border-radius:8px;font:inherit;font-size:14px}
 .register-grid label > input:focus{outline:3px solid #4877eb33;border-color:var(--blue)}
+.register-grid label > input:read-only{background:#f1f5f9;color:#64748b;cursor:not-allowed}
+.register-grid label > input:read-only:focus{outline:none;border-color:#dbe2eb;box-shadow:none}
 .register-grid label > input.input-date{font-variant-numeric:tabular-nums;min-height:44px;color-scheme:light}
+.register-grid label .date-ddmmyyyy-field{width:100%}
+.register-grid label .date-ddmmyyyy-wrap{display:flex;align-items:stretch;border:1px solid #dbe2eb;border-radius:8px;background:#fff;overflow:hidden;transition:border-color .15s,box-shadow .15s}
+.register-grid label .date-ddmmyyyy-wrap:focus-within{border-color:var(--blue);box-shadow:0 0 0 3px #4877eb33}
+.register-grid label .date-ddmmyyyy-text{flex:1;min-width:0;width:100%;padding:12px 14px;border:0;border-radius:0!important;font:inherit;font-size:14px;background:transparent;font-variant-numeric:tabular-nums;min-height:44px;color-scheme:light}
+.register-grid label .date-ddmmyyyy-text:focus{outline:none}
+.register-grid label .date-ddmmyyyy-calendar-btn{border:0;border-left:1px solid #dbe2eb;border-radius:0;padding:0 14px;background:#f8fafc;color:#475569}
+.register-grid label .date-ddmmyyyy-wrap:focus-within .date-ddmmyyyy-calendar-btn{border-left-color:#dbe2eb}
 .date-ddmmyyyy-field{display:grid;gap:6px}
 .date-ddmmyyyy-wrap{display:flex;align-items:stretch;gap:0;position:relative}
 .date-ddmmyyyy-text{flex:1;min-width:0;border-top-right-radius:0!important;border-bottom-right-radius:0!important}
@@ -325,6 +344,9 @@
 .portal-table-employees tbody tr:nth-child(even):not(.portal-row-pending):hover td{background:#f8fafc}
 .portal-table-section{margin-top:28px}
 .portal-table-section-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:4px}
+.portal-deleted-history{margin-top:8px}
+.portal-deleted-history-hint{margin:0;flex:1 1 100%;max-width:520px}
+.button-outline.is-active{border-color:var(--blue);background:#f4f8ff;color:var(--blue)}
 .portal-table-section-head h2{margin:0;font-size:20px;font-weight:650;color:var(--navy,#142442)}
 .portal-action-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:8px 12px;border-radius:9px;font-size:12px;font-weight:650;line-height:1.2;border:1px solid #cbd5e1;background:linear-gradient(180deg,#fff 0%,#f8fafc 100%);color:#334155;box-shadow:0 1px 2px #14244212,0 0 0 1px #fff inset;cursor:pointer;white-space:nowrap;transition:background .15s,border-color .15s,transform .15s}
 .portal-action-btn:hover:not(:disabled){background:#fff;border-color:#94a3b8;transform:translateY(-1px)}
