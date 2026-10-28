@@ -15,7 +15,10 @@ import {
   Video,
 } from "lucide-react";
 import type { CompanyVerification } from "@/lib/api/company-portal";
-import { companyDocumentAcceptAttr } from "@/lib/company/document-upload";
+import {
+  companyDocumentAcceptAttr,
+  companyDocumentMaxSizeLabel,
+} from "@/lib/company/document-upload";
 import { PORTAL_LOCKED_MESSAGE } from "@/lib/company/verification";
 import { CompanyMemberCertificateSection } from "@/components/company/company-member-certificate-section";
 
@@ -25,17 +28,17 @@ const DOC_META: Record<
 > = {
   NIB: {
     label: "NIB",
-    hint: "Nomor Induk Berusaha — unggah file PDF (maks. jelas terbaca).",
+    hint: `Nomor Induk Berusaha — PDF saja, maks. ${companyDocumentMaxSizeLabel()} per berkas.`,
     icon: Building2,
   },
   KTP_PENANGGUNG_JAWAB: {
     label: "KTP penanggung jawab",
-    hint: "KTP direktur atau penanggung jawab yang terdaftar.",
+    hint: `KTP direktur atau penanggung jawab — PDF atau gambar, maks. ${companyDocumentMaxSizeLabel()}.`,
     icon: IdCard,
   },
   AKTA: {
     label: "Akta perusahaan",
-    hint: "Akta pendirian atau perubahan terakhir — format PDF saja.",
+    hint: `Akta pendirian atau perubahan terakhir — PDF saja, maks. ${companyDocumentMaxSizeLabel()}.`,
     icon: ScrollText,
   },
 };

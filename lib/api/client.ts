@@ -56,7 +56,19 @@ export function formatApiErrorMessage(err: unknown): string {
     if (typeof raw === "string" && raw.trim()) return raw;
     return err.message;
   }
-  if (err instanceof Error) return err.message;
+  if (err instanceof Error) {
+    const msg = err.message;
+    if (
+      msg.trim().startsWith("<") &&
+      /413|entity too large/i.test(msg)
+    ) {
+      return "Berkas terlalu besar. Ukuran maksimal 5 MB per dokumen.";
+    }
+    if (msg.trim().startsWith("<")) {
+      return "Permintaan gagal diproses oleh server. Coba lagi atau hubungi dukungan.";
+    }
+    return msg;
+  }
   return "Terjadi kesalahan.";
 }
 

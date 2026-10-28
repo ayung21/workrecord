@@ -1,4 +1,5 @@
 import { apiFetch } from "./client";
+import { companyDocumentMaxSizeLabel } from "@/lib/company/document-upload";
 
 export type MemberCertificateInfo = {
   memberId: string;
@@ -145,7 +146,22 @@ export async function uploadCompanyDocument(
   );
   if (!res.ok) {
     const text = await res.text();
+    const maxLabel = companyDocumentMaxSizeLabel();
+    if (
+      res.status === 413 ||
+      /request entity too large/i.test(text) ||
+      /entity too large/i.test(res.statusText)
+    ) {
+      throw new Error(
+        `Berkas terlalu besar. Ukuran maksimal ${maxLabel} per dokumen.`,
+      );
+    }
     let message = text || res.statusText;
+    if (message.trim().startsWith("<")) {
+      throw new Error(
+        `Gagal mengunggah dokumen (HTTP ${res.status}). Pastikan berkas ≤ ${maxLabel}.`,
+      );
+    }
     try {
       const parsed = JSON.parse(text) as { message?: string | string[] };
       const raw = parsed.message;
