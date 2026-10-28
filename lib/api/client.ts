@@ -49,6 +49,9 @@ function serializeJsonBody(body: unknown): BodyInit | undefined {
 
 export function formatApiErrorMessage(err: unknown): string {
   if (err instanceof ApiRequestError) {
+    if (err.status === 413) {
+      return err.message;
+    }
     const raw = (err.body as { message?: string | string[] } | null)?.message;
     if (Array.isArray(raw)) {
       return raw.filter(Boolean).join("\n");

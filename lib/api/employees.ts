@@ -1,4 +1,5 @@
-import { apiFetch, ApiRequestError, getApiBaseUrl } from "./client";
+import { apiFetch, getApiBaseUrl } from "./client";
+import { throwFormUploadError } from "./form-upload-error";
 
 export type CreateEmployeeInput = {
   nationalIdNumber: string;
@@ -45,12 +46,11 @@ export async function createEmployeeRecord(
     data = text;
   }
   if (!res.ok) {
-    let message = res.statusText;
-    if (typeof data === "object" && data !== null && "message" in data) {
-      const raw = (data as { message: unknown }).message;
-      message = Array.isArray(raw) ? raw.join(", ") : String(raw);
-    }
-    throw new ApiRequestError(message, res.status, data);
+    throwFormUploadError(res, text, data, {
+      tooLargeMessage:
+        "Foto terlalu besar untuk server. Pilih gambar lebih kecil atau hubungi admin (batas nginx).",
+      htmlFallbackLabel: "foto karyawan",
+    });
   }
   return data;
 }
@@ -228,12 +228,11 @@ export async function updateEmployeeRecord(
       data = text;
     }
     if (!res.ok) {
-      let message = res.statusText;
-      if (typeof data === "object" && data !== null && "message" in data) {
-        const raw = (data as { message: unknown }).message;
-        message = Array.isArray(raw) ? raw.join(", ") : String(raw);
-      }
-      throw new ApiRequestError(message, res.status, data);
+      throwFormUploadError(res, text, data, {
+        tooLargeMessage:
+          "Foto terlalu besar untuk server. Pilih gambar lebih kecil atau hubungi admin (batas nginx).",
+        htmlFallbackLabel: "foto karyawan",
+      });
     }
     return data;
   }
