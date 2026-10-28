@@ -11,6 +11,10 @@ import {
   fetchEmployeeChangeHistory,
 } from "@/lib/api/employees";
 import { formatApiErrorMessage } from "@/lib/api/client";
+import {
+  employeePhotoMaxRawSizeLabel,
+  prepareEmployeePhotoForUpload,
+} from "@/lib/company/employee-photo-upload";
 import { toDateInputValue } from "@/lib/format/date-input";
 import { DdMmYyyyDateField } from "@/components/forms/dd-mm-yyyy-date-field";
 
@@ -326,8 +330,29 @@ export function EmployeeEditModal({
     leftAt: toDateInputValue(initial.leftAt),
   }));
   const [photo, setPhoto] = useState<File | null>(null);
+  const [photoProcessing, setPhotoProcessing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const pickPhotoFile = async (file: File | null | undefined) => {
+    if (!file) {
+      setPhoto(null);
+      return;
+    }
+    setPhotoProcessing(true);
+    setError(null);
+    try {
+      const prepared = await prepareEmployeePhotoForUpload(file);
+      setPhoto(prepared);
+    } catch (err) {
+      setPhoto(null);
+      setError(
+        err instanceof Error ? err.message : "Gagal memproses foto.",
+      );
+    } finally {
+      setPhotoProcessing(false);
+    }
+  };
 
   useEffect(() => {
     setForm({
@@ -441,12 +466,24 @@ export function EmployeeEditModal({
           <input
             type="file"
             accept="image/jpeg,image/png,image/webp"
-            onChange={(e) => setPhoto(e.target.files?.[0] ?? null)}
+            disabled={photoProcessing}
+            onChange={(e) => void pickPhotoFile(e.target.files?.[0])}
           />
+          <span className="register-field-hint">
+            {photoProcessing
+              ? "Memproses foto…"
+              : photo
+                ? `Siap unggah: ${photo.name}`
+                : `JPG, PNG, atau WEBP — maks. ${employeePhotoMaxRawSizeLabel()}, diperkecil otomatis`}
+          </span>
         </label>
         {error && <p className="explore-error register-full">{error}</p>}
         <div className="register-full doc-actions">
-          <button type="submit" className="button button-blue" disabled={busy}>
+          <button
+            type="submit"
+            className="button button-blue"
+            disabled={busy || photoProcessing}
+          >
             {requiresApproval ? "Kirim untuk persetujuan" : "Simpan perubahan"}
           </button>
           <button type="button" onClick={onClose}>Batal</button>

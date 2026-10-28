@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "@/components/app-link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { CheckCheck } from "lucide-react";
 import { HeaderAuthLink } from "@/components/header-auth-link";
 import { useCompanyPortalStatus } from "@/components/company/company-portal-status";
 
@@ -27,14 +27,17 @@ export function PortalShell({
     <div className="site-shell explore-page portal-shell-wide">
       <header className="site-header">
         <div className="container header-inner">
-          <Link href="/" className="brand" aria-label="WorkRecord">
-            <span className="brand-mark">
-              <CheckCheck strokeWidth={3} size={25} />
-            </span>
-            <span>
-              work<span className="font-normal">record</span>
-              <span className="brand-dot">.</span>
-            </span>
+          <Link href="/" className="brand brand-home-logo" aria-label="Work Record">
+            <Image
+              src="/logo_dashboard.jpeg"
+              alt=""
+              width={44}
+              height={44}
+              className="brand-home-logo-img"
+              priority
+              unoptimized
+            />
+            <span className="brand-home-logo-text">WORK RECORD</span>
           </Link>
           <nav className="desktop-nav portal-nav">
             {links.map((l) => {
