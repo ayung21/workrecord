@@ -389,7 +389,7 @@ export function EmployeeEditModal({
           ? "Perubahan oleh Admin masuk antrean persetujuan. Pimpinan menyetujui jika sudah benar — data langsung diperbarui."
           : "Sebagai Pimpinan, perubahan langsung diterapkan tanpa persetujuan tambahan."}
       </p>
-      <form className="register-grid register-grid-employee" onSubmit={onSubmit}>
+      <form className="register-grid portal-modal-form" onSubmit={onSubmit}>
         <label>
           <span>NIK (16 digit)</span>
           <input
@@ -431,6 +431,13 @@ export function EmployeeEditModal({
           />
         </label>
         <label>
+          <span>Posisi / jabatan</span>
+          <input
+            value={form.position ?? ""}
+            onChange={(e) => setForm((f) => ({ ...f, position: e.target.value }))}
+          />
+        </label>
+        <label>
           <span>Mulai bekerja</span>
           <DdMmYyyyDateField
             value={form.joinedAt ?? ""}
@@ -443,7 +450,7 @@ export function EmployeeEditModal({
           />
         </label>
         <label>
-          <span>Selesai</span>
+          <span>Selesai bekerja</span>
           <DdMmYyyyDateField
             value={form.leftAt ?? ""}
             max={todayDateMax()}
@@ -453,15 +460,9 @@ export function EmployeeEditModal({
               setForm((f) => ({ ...f, leftAt: iso || undefined }))
             }
           />
+          <span className="register-field-hint">Kosongkan jika masih aktif</span>
         </label>
-        <label>
-          <span>Posisi</span>
-          <input
-            value={form.position ?? ""}
-            onChange={(e) => setForm((f) => ({ ...f, position: e.target.value }))}
-          />
-        </label>
-        <label>
+        <label className="register-full">
           <span>Foto baru (opsional)</span>
           <input
             type="file"
@@ -478,7 +479,7 @@ export function EmployeeEditModal({
           </span>
         </label>
         {error && <p className="explore-error register-full">{error}</p>}
-        <div className="register-full doc-actions">
+        <div className="register-full register-form-actions">
           <button
             type="submit"
             className="button button-blue"
@@ -486,7 +487,9 @@ export function EmployeeEditModal({
           >
             {requiresApproval ? "Kirim untuk persetujuan" : "Simpan perubahan"}
           </button>
-          <button type="button" onClick={onClose}>Batal</button>
+          <button type="button" className="button" onClick={onClose}>
+            Batal
+          </button>
         </div>
       </form>
     </ModalShell>
