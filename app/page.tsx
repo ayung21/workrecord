@@ -64,6 +64,7 @@ function HomeHeaderLogo() {
         height={44}
         className="brand-home-logo-img"
         priority
+        unoptimized
       />
       <span className="brand-home-logo-text">WORK RECORD</span>
     </Link>
