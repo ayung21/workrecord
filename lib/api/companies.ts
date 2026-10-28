@@ -8,6 +8,7 @@ export type PartnerRelationRole = "ATASAN" | "BAWAHAN";
 export type RegisterCompanyInput = {
   companyName: string;
   companyPhone: string;
+  businessField: string;
   fullName: string;
   email: string;
   password: string;

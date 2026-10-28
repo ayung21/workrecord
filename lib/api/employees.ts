@@ -247,3 +247,35 @@ export function employeePhotoUrl(companyId: string, recordId: string): string {
   const base = getApiBaseUrl();
   return `${base}/companies/${companyId}/employee-records/${recordId}/photo`;
 }
+
+export type DeletedEmployeeRow = {
+  id: string;
+  employeeName: string;
+  nationalIdNumber: string | null;
+  position: string | null;
+  joinedAt: string | null;
+  leftAt: string | null;
+  deletedAt: string;
+  deletedBy: {
+    fullName: string;
+    publicLoginId: string;
+  } | null;
+};
+
+export function fetchDeletedEmployeeHistory(companyId: string, token: string) {
+  return apiFetch<{ items: DeletedEmployeeRow[] }>(
+    `companies/${companyId}/employee-records/deleted`,
+    { token },
+  );
+}
+
+export function deleteEmployeeRecord(
+  companyId: string,
+  token: string,
+  recordId: string,
+) {
+  return apiFetch<{ id: string }>(
+    `companies/${companyId}/employee-records/${recordId}`,
+    { method: "DELETE", token },
+  );
+}

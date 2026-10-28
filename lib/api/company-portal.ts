@@ -62,8 +62,36 @@ export function fetchSiteVerificationVideoSettings(token: string) {
 export type MyCompanyResponse = {
   id: string;
   name: string;
+  businessField?: string | null;
   verification: CompanyVerification;
 };
+
+export type CompanySettings = {
+  id: string;
+  name: string;
+  companyPhone: string;
+  businessField: string | null;
+  operationalStatus: string;
+  canEditBusinessField: boolean;
+};
+
+export function fetchCompanySettings(companyId: string, token: string) {
+  return apiFetch<CompanySettings>(`companies/${companyId}/settings`, {
+    token,
+  });
+}
+
+export function updateCompanySettings(
+  companyId: string,
+  token: string,
+  body: { businessField: string },
+) {
+  return apiFetch<CompanySettings>(`companies/${companyId}/settings`, {
+    method: "PATCH",
+    token,
+    body,
+  });
+}
 
 export function fetchMyCompany(token: string) {
   return apiFetch<MyCompanyResponse>("companies/me", { token });
