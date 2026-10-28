@@ -10,6 +10,7 @@ import {
   Pencil,
   RotateCcw,
   ShieldAlert,
+  Trash2,
   X,
   XCircle,
 } from "lucide-react";
@@ -20,11 +21,14 @@ import { fetchPortalEmployeeList } from "@/lib/api/company-portal";
 import {
   approveEmployeeRequest,
   createEmployeeRecord,
+  deleteEmployeeRecord,
   employeePhotoUrl,
+  fetchDeletedEmployeeHistory,
   fetchPendingEmployeeApprovals,
   fetchRejectedEmployeeApprovals,
   isPendingEmployeeCreate,
   rejectEmployeeRequest,
+  type DeletedEmployeeRow,
   type EmployeeChangeRequest,
 } from "@/lib/api/employees";
 import { fetchEmployeeRecord } from "@/lib/api/records";
@@ -58,6 +62,17 @@ import {
 } from "@/components/company/employee-portal-modals";
 
 const PAGE_SIZE = 10;
+
+function formatPortalDate(value: string | null | undefined): string {
+  if (!value) return "—";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return value;
+  return d.toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
 
 const listSwal = Swal.mixin({
   scrollbarPadding: false,
@@ -187,6 +202,9 @@ export default function ListKaryawanPage() {
   const [photoDragOver, setPhotoDragOver] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const photoFieldRef = useRef<HTMLDivElement>(null);
+  const addSubmitLock = useRef(false);
+  const blSubmitLock = useRef(false);
+  const approveSubmitLock = useRef(false);
   const [photoInvalid, setPhotoInvalid] = useState(false);
   const [photoProcessing, setPhotoProcessing] = useState(false);
   const maxDateToday = useMemo(() => todayDateMax(), []);
@@ -325,6 +343,9 @@ export default function ListKaryawanPage() {
 
   const [detailRow, setDetailRow] = useState<Row | null>(null);
   const [historyRow, setHistoryRow] = useState<Row | null>(null);
+  const [showDeletedHistory, setShowDeletedHistory] = useState(false);
+  const [deletedRows, setDeletedRows] = useState<DeletedEmployeeRow[]>([]);
+  const [deletedLoading, setDeletedLoading] = useState(false);
   const [editCtx, setEditCtx] = useState<{
     recordId: string;
     requiresApproval: boolean;
@@ -515,8 +536,19 @@ export default function ListKaryawanPage() {
         };
       });
 
+      const activeNikSet = new Set(
+        activeRows
+          .map((r) => r.nationalIdNumber?.replace(/\D/g, "") ?? "")
+          .filter((nik) => nik.length === 16),
+      );
+
       const queueRows: Row[] = [
-        ...pendingCreate.map((p) => mapRequestRow(p, "pending")),
+        ...pendingCreate
+          .filter((p) => {
+            const nik = (p.payload?.nationalIdNumber ?? "").replace(/\D/g, "");
+            return !nik || !activeNikSet.has(nik);
+          })
+          .map((p) => mapRequestRow(p, "pending")),
         ...rejectedCreate.map((p) => mapRequestRow(p, "rejected")),
       ];
 
@@ -525,6 +557,57 @@ export default function ListKaryawanPage() {
     } catch (err) {
       setRows([]);
       setError(formatApiErrorMessage(err) || "Gagal memuat data karyawan.");
+    }
+  };
+
+  const loadDeletedHistory = async () => {
+    if (!token || !companyId) return;
+    setDeletedLoading(true);
+    try {
+      const res = await fetchDeletedEmployeeHistory(companyId, token);
+      setDeletedRows(res.items ?? []);
+    } catch (err) {
+      setDeletedRows([]);
+      setError(formatApiErrorMessage(err) || "Gagal memuat riwayat hapus.");
+    } finally {
+      setDeletedLoading(false);
+    }
+  };
+
+  const toggleDeletedHistory = () => {
+    const next = !showDeletedHistory;
+    setShowDeletedHistory(next);
+    if (next) void loadDeletedHistory();
+  };
+
+  const onDeleteEmployee = async (row: Row) => {
+    if (!token || !companyId || !isLeadership) return;
+    const result = await listSwal.fire({
+      icon: "warning",
+      title: "Hapus karyawan?",
+      html: `Data <strong>${row.employeeName}</strong> akan dihapus dari daftar aktif dan tercatat di riwayat hapus.`,
+      showCancelButton: true,
+      confirmButtonText: "Ya, hapus",
+      cancelButtonText: "Batal",
+      confirmButtonColor: "#dc2626",
+    });
+    if (!result.isConfirmed) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await deleteEmployeeRecord(companyId, token, row.id);
+      await reload();
+      if (showDeletedHistory) await loadDeletedHistory();
+      await listSwal.fire({
+        icon: "success",
+        title: "Dihapus",
+        text: "Karyawan dipindahkan ke riwayat hapus.",
+        confirmButtonColor: "#2459df",
+      });
+    } catch (err) {
+      setError(formatApiErrorMessage(err) || "Gagal menghapus.");
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -551,6 +634,7 @@ export default function ListKaryawanPage() {
   const onAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!token || !companyId) return;
+    if (addSubmitLock.current || busy || photoProcessing) return;
     const dateErr = validateEmployeeDates(form);
     if (dateErr) {
       setError(dateErr);
@@ -569,6 +653,7 @@ export default function ListKaryawanPage() {
       setError("Posisi/jabatan wajib diisi.");
       return;
     }
+    addSubmitLock.current = true;
     setBusy(true);
     setError(null);
     try {
@@ -615,6 +700,7 @@ export default function ListKaryawanPage() {
     } catch (err) {
       setError(formatApiErrorMessage(err) || "Gagal menyimpan");
     } finally {
+      addSubmitLock.current = false;
       setBusy(false);
     }
   };
@@ -662,6 +748,7 @@ export default function ListKaryawanPage() {
   };
 
   const onBlacklist = async () => {
+    if (blSubmitLock.current || busy) return;
     if (!token) {
       setError("Sesi login habis. Silakan keluar lalu login ulang.");
       return;
@@ -699,6 +786,7 @@ export default function ListKaryawanPage() {
       setError("Menghitung diskon voucher… tunggu sebentar lalu coba lagi.");
       return;
     }
+    blSubmitLock.current = true;
     setBusy(true);
     setError(null);
     try {
@@ -778,6 +866,7 @@ export default function ListKaryawanPage() {
     } catch (err) {
       setError(formatApiErrorMessage(err) || "Sanggahan gagal");
     } finally {
+      blSubmitLock.current = false;
       setBusy(false);
     }
   };
@@ -903,6 +992,8 @@ export default function ListKaryawanPage() {
 
   const onApprovePending = async (requestId: string) => {
     if (!token || !companyId) return;
+    if (approveSubmitLock.current || busy) return;
+    approveSubmitLock.current = true;
     setBusy(true);
     setError(null);
     try {
@@ -918,6 +1009,7 @@ export default function ListKaryawanPage() {
     } catch (err) {
       setError(formatApiErrorMessage(err) || "Gagal menyetujui");
     } finally {
+      approveSubmitLock.current = false;
       setBusy(false);
     }
   };
@@ -1148,6 +1240,14 @@ export default function ListKaryawanPage() {
       <section className="portal-table-section" aria-labelledby="employee-list-heading">
         <div className="portal-table-section-head">
           <h2 id="employee-list-heading">Daftar karyawan</h2>
+          <button
+            type="button"
+            className={`button button-outline${showDeletedHistory ? " is-active" : ""}`}
+            onClick={toggleDeletedHistory}
+          >
+            <History size={16} aria-hidden />
+            {showDeletedHistory ? "Sembunyikan riwayat hapus" : "Riwayat hapus"}
+          </button>
         </div>
       <div className="portal-list-filters">
         <label>
@@ -1336,6 +1436,19 @@ export default function ListKaryawanPage() {
                             Edit
                           </button>
                         )}
+                      {isLeadership &&
+                        !r.id.startsWith("pending-") &&
+                        r.approvalState !== "pending" && (
+                          <button
+                            type="button"
+                            className="portal-action-btn portal-action-btn--danger"
+                            disabled={busy}
+                            onClick={() => void onDeleteEmployee(r)}
+                          >
+                            <Trash2 size={14} aria-hidden />
+                            Hapus
+                          </button>
+                        )}
                       {r.approvalState === "pending" &&
                         isLeadership &&
                         r.requestId &&
@@ -1451,6 +1564,65 @@ export default function ListKaryawanPage() {
         </nav>
       )}
       </section>
+
+      {showDeletedHistory ? (
+        <section
+          className="portal-table-section portal-deleted-history"
+          aria-labelledby="employee-deleted-heading"
+        >
+          <div className="portal-table-section-head">
+            <h2 id="employee-deleted-heading">Riwayat hapus karyawan</h2>
+            <p className="register-field-hint portal-deleted-history-hint">
+              Data yang dihapus Pimpinan (Master) — tidak tampil di daftar aktif.
+            </p>
+          </div>
+          {deletedLoading ? (
+            <div className="portal-table-loading">
+              <Loader2 className="animate-spin" size={24} aria-hidden />
+              <span>Memuat riwayat hapus…</span>
+            </div>
+          ) : (
+            <div className="portal-table-wrap">
+              <table className="portal-table portal-table-employees">
+                <thead>
+                  <tr>
+                    <th scope="col">Nama</th>
+                    <th scope="col">NIK</th>
+                    <th scope="col">Posisi</th>
+                    <th scope="col">Dihapus pada</th>
+                    <th scope="col">Dihapus oleh</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {deletedRows.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="portal-table-empty">
+                        Belum ada karyawan yang dihapus.
+                      </td>
+                    </tr>
+                  ) : (
+                    deletedRows.map((r) => (
+                      <tr key={r.id}>
+                        <td className="portal-table-name">{r.employeeName}</td>
+                        <td className="portal-table-mono">
+                          {r.nationalIdNumber ?? "—"}
+                        </td>
+                        <td>{r.position ?? "—"}</td>
+                        <td>{formatPortalDate(r.deletedAt)}</td>
+                        <td>
+                          {r.deletedBy
+                            ? `${r.deletedBy.fullName} (${r.deletedBy.publicLoginId})`
+                            : "—"}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      ) : null}
 
       {detailRow && (
         <EmployeeDetailModal

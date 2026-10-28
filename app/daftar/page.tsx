@@ -86,6 +86,7 @@ export default function DaftarPage() {
 
   const [companyName, setCompanyName] = useState("");
   const [companyPhone, setCompanyPhone] = useState("");
+  const [businessField, setBusinessField] = useState("");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -125,6 +126,7 @@ export default function DaftarPage() {
       const result = await registerCompany({
         companyName: companyName.trim(),
         companyPhone: companyPhone.trim(),
+        businessField: businessField.trim(),
         fullName: fullName.trim(),
         email: email.trim(),
         password,
@@ -206,6 +208,21 @@ export default function DaftarPage() {
                     minLength={8}
                     placeholder="021…"
                   />
+                </span>
+              </label>
+              <label className="auth-field register-full">
+                <span>Bidang usaha</span>
+                <input
+                  value={businessField}
+                  onChange={(e) => setBusinessField(e.target.value)}
+                  required
+                  minLength={2}
+                  maxLength={200}
+                  placeholder="Contoh: Manufaktur tekstil, Jasa logistik"
+                />
+                <span className="register-field-hint">
+                  Ditampilkan pada verifikasi keanggotaan WorkRecord. Maks. 200
+                  karakter.
                 </span>
               </label>
             </div>
