@@ -115,7 +115,11 @@ function validateEmployeeDates(form: {
   return null;
 }
 
-type ApprovalState = "none" | "pending" | "rejected";
+type ApprovalState = "none" | "pending" | "awaiting_payment" | "rejected";
+
+function isRowApprovalLocked(state: ApprovalState | undefined): boolean {
+  return state === "pending" || state === "awaiting_payment";
+}
 
 type Row = {
   id: string;
@@ -497,12 +501,13 @@ export default function ListKaryawanPage() {
         const pu = pendingUpdateByRecord.get(r.id);
         const ru = rejectedUpdateByRecord.get(r.id);
         if (pbl) {
+          const awaitingPay = pbl.awaitingBlacklistPayment === true;
           return {
             ...r,
             requestId: pbl.id,
-            approvalState: "pending",
+            approvalState: awaitingPay ? "awaiting_payment" : "pending",
             pendingAction: "BLACKLIST",
-            isPending: true,
+            isPending: !awaitingPay,
             requestSnapshot: pbl,
             changeRevisionCount: r.changeRevisionCount ?? 0,
           };
@@ -1365,6 +1370,10 @@ export default function ListKaryawanPage() {
                               ? "Menunggu ubah data"
                               : "Menunggu persetujuan"}
                         </span>
+                      ) : r.approvalState === "awaiting_payment" ? (
+                        <span className="portal-badge portal-badge-pending">
+                          Menunggu pembayaran
+                        </span>
                       ) : r.approvalState === "rejected" ? (
                         <span className="portal-badge portal-badge-rejected">
                           Perlu revisi
@@ -1398,7 +1407,7 @@ export default function ListKaryawanPage() {
                       {(r.changeRevisionCount ?? 0) > 0 ||
                       r.requestSnapshot ||
                       (!r.id.startsWith("pending-") &&
-                        r.approvalState !== "pending") ? (
+                        !isRowApprovalLocked(r.approvalState)) ? (
                         <button
                           type="button"
                           className="portal-action-btn"
@@ -1425,7 +1434,7 @@ export default function ListKaryawanPage() {
                         )}
                       {(isAdmin || isLeadership) &&
                         !r.id.startsWith("pending-") &&
-                        r.approvalState !== "pending" && (
+                        !isRowApprovalLocked(r.approvalState) && (
                           <button
                             type="button"
                             className="portal-action-btn"
@@ -1438,7 +1447,7 @@ export default function ListKaryawanPage() {
                         )}
                       {isLeadership &&
                         !r.id.startsWith("pending-") &&
-                        r.approvalState !== "pending" && (
+                        !isRowApprovalLocked(r.approvalState) && (
                           <button
                             type="button"
                             className="portal-action-btn portal-action-btn--danger"
@@ -1499,7 +1508,7 @@ export default function ListKaryawanPage() {
                             </button>
                           </>
                         )}
-                      {r.approvalState !== "pending" &&
+                      {!isRowApprovalLocked(r.approvalState) &&
                         !r.id.startsWith("pending-") &&
                         !r.hasBlacklist && (
                           <button
@@ -1511,7 +1520,7 @@ export default function ListKaryawanPage() {
                             Sanggahkan
                           </button>
                         )}
-                      {r.approvalState !== "pending" &&
+                      {!isRowApprovalLocked(r.approvalState) &&
                         !r.id.startsWith("pending-") &&
                         r.hasBlacklist &&
                         r.blacklistId && (

@@ -67,6 +67,8 @@ export type EmployeeChangePayload = {
   employeeCode?: string;
   conductSummary?: string;
   photoStagingPath?: string;
+  note?: string;
+  blacklistCheckoutPaymentId?: string;
   id?: string;
 };
 
@@ -79,6 +81,9 @@ export type EmployeeChangeRequest = {
   employeeRecordId?: string | null;
   rejectionReason?: string | null;
   payload: EmployeeChangePayload;
+  /** Pengajuan sanggahan sudah checkout; menunggu konfirmasi/pembayaran. */
+  awaitingBlacklistPayment?: boolean;
+  blacklistCheckoutPaymentId?: string | null;
   requestedBy?: {
     fullName: string;
     publicLoginId: string;
