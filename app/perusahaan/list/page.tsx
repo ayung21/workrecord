@@ -39,6 +39,10 @@ import { ManualBankAccountPicker } from "@/components/payments/manual-bank-picke
 import { showManualTransferAlert } from "@/lib/payments/manual-transfer-alert";
 import { useManualBankSelection } from "@/lib/payments/use-manual-bank-selection";
 import { formatApiErrorMessage } from "@/lib/api/client";
+import {
+  employeePhotoMaxRawSizeLabel,
+  prepareEmployeePhotoForUpload,
+} from "@/lib/company/employee-photo-upload";
 import { fetchPricingCatalog } from "@/lib/api/pricing";
 import {
   listAvailableVouchers,
@@ -184,6 +188,7 @@ export default function ListKaryawanPage() {
   const photoInputRef = useRef<HTMLInputElement>(null);
   const photoFieldRef = useRef<HTMLDivElement>(null);
   const [photoInvalid, setPhotoInvalid] = useState(false);
+  const [photoProcessing, setPhotoProcessing] = useState(false);
   const maxDateToday = useMemo(() => todayDateMax(), []);
   const [form, setForm] = useState({
     nationalIdNumber: "",
@@ -381,16 +386,23 @@ export default function ListKaryawanPage() {
     if (page > totalPages) setPage(totalPages);
   }, [page, totalPages]);
 
-  const pickPhotoFile = (file: File | null | undefined) => {
+  const pickPhotoFile = async (file: File | null | undefined) => {
     if (!file) return;
-    const allowed = ["image/jpeg", "image/png", "image/webp"];
-    if (!allowed.includes(file.type)) {
-      setError("Foto harus JPG, PNG, atau WEBP.");
-      return;
-    }
-    setPhotoFile(file);
-    setPhotoInvalid(false);
+    setPhotoProcessing(true);
     setError(null);
+    try {
+      const prepared = await prepareEmployeePhotoForUpload(file);
+      setPhotoFile(prepared);
+      setPhotoInvalid(false);
+    } catch (err) {
+      setPhotoFile(null);
+      setPhotoInvalid(false);
+      setError(
+        err instanceof Error ? err.message : "Gagal memproses foto.",
+      );
+    } finally {
+      setPhotoProcessing(false);
+    }
   };
 
   const mapRequestRow = (
@@ -1044,8 +1056,10 @@ export default function ListKaryawanPage() {
             <div
               role="button"
               tabIndex={0}
-              className={`employee-photo-dropzone${photoDragOver ? " is-dragover" : ""}${photoPreviewUrl ? " has-preview" : ""}`}
-              onClick={() => photoInputRef.current?.click()}
+              className={`employee-photo-dropzone${photoDragOver ? " is-dragover" : ""}${photoPreviewUrl ? " has-preview" : ""}${photoProcessing ? " is-busy" : ""}`}
+              onClick={() => {
+                if (!photoProcessing) photoInputRef.current?.click();
+              }}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault();
@@ -1060,10 +1074,26 @@ export default function ListKaryawanPage() {
               onDrop={(e) => {
                 e.preventDefault();
                 setPhotoDragOver(false);
-                pickPhotoFile(e.dataTransfer.files?.[0]);
+                if (!photoProcessing) {
+                  void pickPhotoFile(e.dataTransfer.files?.[0]);
+                }
               }}
             >
-              {photoPreviewUrl ? (
+              {photoProcessing ? (
+                <>
+                  <Loader2
+                    className="employee-photo-dropzone-icon animate-spin"
+                    size={28}
+                    aria-hidden
+                  />
+                  <p className="employee-photo-dropzone-title">
+                    Memproses foto…
+                  </p>
+                  <p className="employee-photo-dropzone-hint">
+                    Foto diperkecil otomatis sebelum unggah
+                  </p>
+                </>
+              ) : photoPreviewUrl ? (
                 <>
                   <img
                     src={photoPreviewUrl}
@@ -1086,7 +1116,8 @@ export default function ListKaryawanPage() {
                     Unggah foto karyawan
                   </p>
                   <p className="employee-photo-dropzone-hint">
-                    Klik atau seret JPG, PNG, atau WEBP (wajib)
+                    JPG, PNG, atau WEBP — maks. {employeePhotoMaxRawSizeLabel()},
+                    diperkecil otomatis
                   </p>
                 </>
               )}
@@ -1101,7 +1132,7 @@ export default function ListKaryawanPage() {
             <button
               type="submit"
               className="button button-blue"
-              disabled={busy}
+              disabled={busy || photoProcessing}
             >
               {busy ? "Menyimpan…" : "Simpan karyawan"}
             </button>
