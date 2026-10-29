@@ -68,7 +68,11 @@ export const MemberCertificateSheet = forwardRef<
       <div className="member-cert-sheet-rule" aria-hidden />
 
       <h1 className="member-cert-sheet-title">
-        MEMBER <span className="member-cert-sheet-title-accent">COMPANY</span>
+        MEMBER{" "}
+        <span className="member-cert-sheet-title-accent">
+          COMPANY
+          <span className="member-cert-sheet-title-underline" aria-hidden />
+        </span>
       </h1>
 
       <div className="member-cert-sheet-cols">
@@ -140,7 +144,11 @@ export const CompanyMemberCertificate = forwardRef<HTMLElement, Props>(
         <div className="member-cert-divider" aria-hidden />
 
         <h1 className="member-cert-title">
-          MEMBER <span className="member-cert-title-accent">COMPANY</span>
+          MEMBER{" "}
+          <span className="member-cert-title-accent">
+            COMPANY
+            <span className="member-cert-title-underline" aria-hidden />
+          </span>
         </h1>
 
         <div className="member-cert-body">

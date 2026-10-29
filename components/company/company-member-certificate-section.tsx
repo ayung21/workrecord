@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "@/components/app-link";
 import { Download, ExternalLink, Loader2, QrCode } from "lucide-react";
 import type { MemberCertificateInfo } from "@/lib/api/company-portal";
@@ -24,10 +24,16 @@ export function CompanyMemberCertificateSection({
 }: Props) {
   const verifyUrl = memberVerifyPageUrl(certificate.verifyToken);
   const certUrl = memberCertificatePageUrl(certificate.verifyToken);
+  const sheetRef = useRef<HTMLElement>(null);
   const [downloading, setDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
 
   const onDownloadPdf = async () => {
+    const el = sheetRef.current;
+    if (!el) {
+      setDownloadError("Pratinjau sertifikat belum siap. Coba lagi.");
+      return;
+    }
     setDownloading(true);
     setDownloadError(null);
     try {
@@ -37,9 +43,7 @@ export function CompanyMemberCertificateSection({
         .replace(/\s+/g, "-")
         .slice(0, 40);
       await downloadMemberCertificatePdf({
-        companyName,
-        memberId: certificate.memberId,
-        verifyToken: certificate.verifyToken,
+        element: el,
         fileName: `WorkRecord-Member-${certificate.memberId}${slug ? `-${slug}` : ""}.pdf`,
       });
     } catch (err) {
@@ -116,12 +120,25 @@ export function CompanyMemberCertificateSection({
         </div>
       </div>
 
-      <details className="company-member-cert-preview">
-        <summary>Pratinjau desain sertifikat</summary>
+      {/* Sheet resmi (layout PDF) — offscreen agar unduh tetap sama meski details tertutup */}
+      <div className="member-cert-capture-host" aria-hidden>
         <CompanyMemberCertificate
+          ref={sheetRef}
           companyName={companyName}
           certificate={certificate}
+          variant="print"
         />
+      </div>
+
+      <details className="company-member-cert-preview">
+        <summary>Pratinjau desain sertifikat</summary>
+        <div className="member-cert-page-frame company-member-cert-preview-frame">
+          <CompanyMemberCertificate
+            companyName={companyName}
+            certificate={certificate}
+            variant="print"
+          />
+        </div>
       </details>
     </section>
   );
