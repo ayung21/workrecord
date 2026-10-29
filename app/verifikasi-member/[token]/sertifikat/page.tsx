@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Download, Loader2 } from "lucide-react";
 import { useParams } from "next/navigation";
 import { CompanyMemberCertificate } from "@/components/company/company-member-certificate";
@@ -23,6 +23,7 @@ function safePdfFileName(companyName: string, memberId: string) {
 export default function SertifikatMemberPage() {
   const params = useParams();
   const token = typeof params.token === "string" ? params.token : "";
+  const sheetRef = useRef<HTMLElement>(null);
   const [data, setData] = useState<PublicMemberVerification | null>(null);
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState(false);
@@ -54,13 +55,16 @@ export default function SertifikatMemberPage() {
 
   const onDownloadPdf = async () => {
     if (!data?.memberId) return;
+    const el = sheetRef.current;
+    if (!el) {
+      setDownloadError("Sertifikat belum siap. Coba lagi.");
+      return;
+    }
     setDownloading(true);
     setDownloadError(null);
     try {
       await downloadMemberCertificatePdf({
-        companyName: data.companyName,
-        memberId: data.memberId,
-        verifyToken: data.verifyToken,
+        element: el,
         fileName: safePdfFileName(data.companyName, data.memberId),
       });
     } catch (err) {
@@ -122,12 +126,13 @@ export default function SertifikatMemberPage() {
           </p>
         ) : (
           <p className="member-cert-toolbar-hint">
-            PDF dibuat dengan layout tetap (bukan screenshot halaman).
+            PDF mengikuti tampilan sertifikat di bawah.
           </p>
         )}
       </div>
       <div className="member-cert-page-frame">
         <CompanyMemberCertificate
+          ref={sheetRef}
           companyName={data.companyName}
           certificate={certificate}
           variant="print"
