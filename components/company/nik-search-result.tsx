@@ -5,6 +5,7 @@ import type {
   DisputingCompanyRef,
   EmployeeRecordView,
 } from "@/lib/api/records";
+import { formatDisputingCompanyDisplay } from "@/lib/company/disputing-company-display";
 import { EmployeeRecordPhoto } from "@/components/company/employee-record-photo";
 
 function fmtDate(v: string | null | undefined) {
@@ -45,12 +46,19 @@ export function NikSearchResult({
 
   const disputingNames =
     disputingCompanies.length > 0
-      ? disputingCompanies.map((c) => c.companyName)
+      ? disputingCompanies.map((c) =>
+          formatDisputingCompanyDisplay(c.companyName, c.companyPhone),
+        )
       : [
           ...new Set(
             items
               .filter((r) => r.disputedByEmployer && r.disputedByCompanyName)
-              .map((r) => r.disputedByCompanyName as string),
+              .map((r) =>
+                formatDisputingCompanyDisplay(
+                  r.disputedByCompanyName as string,
+                  r.disputedByCompanyPhone,
+                ),
+              ),
           ),
         ];
 
@@ -155,7 +163,12 @@ export function NikSearchResult({
                   {r.disputedByEmployer && r.disputedByCompanyName ? (
                     <p className="nik-search-record-dispute">
                       Disanggahkan oleh{" "}
-                      <strong>{r.disputedByCompanyName}</strong>
+                      <strong>
+                        {formatDisputingCompanyDisplay(
+                          r.disputedByCompanyName,
+                          r.disputedByCompanyPhone,
+                        )}
+                      </strong>
                     </p>
                   ) : null}
                 </div>
