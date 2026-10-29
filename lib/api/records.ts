@@ -36,12 +36,14 @@ export type EmployeeRecordView = {
   disputedByEmployer?: boolean;
   disputedByCompanyId?: string | null;
   disputedByCompanyName?: string | null;
+  disputedByCompanyPhone?: string | null;
   visibility: "full";
 };
 
 export type DisputingCompanyRef = {
   companyId: string;
   companyName: string;
+  companyPhone?: string | null;
   employeeRecordId?: string | null;
 };
 
