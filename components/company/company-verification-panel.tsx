@@ -274,7 +274,12 @@ export function CompanyVerificationPanel({
               {d.rejectReason && (
                 <div className="company-doc-reject" role="alert">
                   <p>
-                    <strong>Alasan penolakan:</strong> {d.rejectReason}
+                    <strong>
+                      {d.status === "MISSING" && !d.hasFile
+                        ? "Instruksi WorkRecord:"
+                        : "Alasan penolakan:"}
+                    </strong>{" "}
+                    {d.rejectReason}
                   </p>
                 </div>
               )}
