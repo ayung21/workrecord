@@ -1,19 +1,16 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
-import Swal from "sweetalert2";
 import { PortalShell } from "@/components/company/portal-shell";
 import { CompanyVerificationPanel } from "@/components/company/company-verification-panel";
 import { useCompanyPortalStatus } from "@/components/company/company-portal-status";
 import { getAccessToken } from "@/lib/auth/session";
 import {
   fetchCompanyDocumentFile,
-  fetchCompanySettings,
   fetchMyCompany,
   requestSiteVerification,
   submitVerification,
-  updateCompanySettings,
   uploadCompanyDocument,
   type CompanyVerification,
 } from "@/lib/api/company-portal";
@@ -33,13 +30,6 @@ export default function VerifikasiPage() {
   );
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [companyName, setCompanyName] = useState("");
-  const [businessField, setBusinessField] = useState("");
-  const [canEditBusinessField, setCanEditBusinessField] = useState(false);
-  const [businessFieldError, setBusinessFieldError] = useState<string | null>(
-    null,
-  );
-  const [businessFieldBusy, setBusinessFieldBusy] = useState(false);
-  const businessFieldSaveLock = useRef(false);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [errorModal, setErrorModal] = useState<string | null>(null);
@@ -61,15 +51,6 @@ export default function VerifikasiPage() {
         setCompanyId(String(me.id));
         setCompanyName(me.name ?? "");
         setVerification(me.verification);
-        try {
-          const settings = await fetchCompanySettings(String(me.id), accessToken);
-          if (!cancelled) {
-            setBusinessField(settings.businessField ?? "");
-            setCanEditBusinessField(settings.canEditBusinessField ?? false);
-          }
-        } catch {
-          /* settings optional jika endpoint belum tersedia */
-        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -85,43 +66,7 @@ export default function VerifikasiPage() {
     setCompanyId(String(me.id));
     setCompanyName(me.name ?? "");
     setVerification(me.verification);
-    if (companyId || me.id) {
-      const settings = await fetchCompanySettings(String(me.id), accessToken);
-      setBusinessField(settings.businessField ?? "");
-      setCanEditBusinessField(settings.canEditBusinessField ?? false);
-    }
     await refreshPortalStatus();
-  };
-
-  const onSaveBusinessField = async () => {
-    if (!accessToken || !companyId || !canEditBusinessField) return;
-    if (businessFieldSaveLock.current || businessFieldBusy) return;
-    const trimmed = businessField.trim();
-    if (trimmed.length > 0 && trimmed.length < 2) {
-      setBusinessFieldError("Bidang usaha minimal 2 karakter.");
-      return;
-    }
-    businessFieldSaveLock.current = true;
-    setBusinessFieldBusy(true);
-    setBusinessFieldError(null);
-    try {
-      const updated = await updateCompanySettings(companyId, accessToken, {
-        businessField: trimmed,
-      });
-      setBusinessField(updated.businessField ?? "");
-      setCanEditBusinessField(updated.canEditBusinessField ?? false);
-      await Swal.fire({
-        icon: "success",
-        title: "Tersimpan",
-        text: "Bidang usaha perusahaan diperbarui.",
-        confirmButtonColor: "#2459df",
-      });
-    } catch (err) {
-      setBusinessFieldError(formatApiErrorMessage(err));
-    } finally {
-      businessFieldSaveLock.current = false;
-      setBusinessFieldBusy(false);
-    }
   };
 
   const onUpload = async (type: string, file: File) => {
@@ -204,9 +149,9 @@ export default function VerifikasiPage() {
       <div className="explore-intro company-verify-intro">
         <h1>Verifikasi perusahaan</h1>
         <p>
-          Lengkapi dokumen legal, atur bidang usaha, lalu verifikasi lapangan
-          (video call atau kunjungan). Setelah aktif, menu Cari NIK, List,
-          Report, dan Iklan terbuka.
+          Lengkapi dokumen legal, lalu verifikasi lapangan (video call atau
+          kunjungan). Setelah aktif, menu Cari NIK, List, Report, dan Iklan
+          terbuka.
         </p>
       </div>
       {loading ? (
@@ -220,12 +165,6 @@ export default function VerifikasiPage() {
           verification={verification}
           busy={busy}
           showLockedNotice={!statusLoading && !isActive}
-          businessField={businessField}
-          canEditBusinessField={canEditBusinessField}
-          businessFieldBusy={businessFieldBusy}
-          businessFieldError={businessFieldError}
-          onBusinessFieldChange={setBusinessField}
-          onSaveBusinessField={() => void onSaveBusinessField()}
           onUpload={(type, file) => void onUpload(type, file)}
           onPreview={(type) => void onPreview(type)}
           onSubmitReview={() => void onSubmit()}
