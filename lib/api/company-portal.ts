@@ -70,9 +70,16 @@ export type CompanySettings = {
   id: string;
   name: string;
   companyPhone: string;
-  businessField: string | null;
   operationalStatus: string;
-  canEditBusinessField: boolean;
+  adminAccount: {
+    fullName: string;
+    publicLoginId: string;
+    email: string;
+    personalPhone: string | null;
+    emailVerifiedAt: string | null;
+    pendingEmail: string | null;
+    pendingEmailExpiresAt: string | null;
+  };
 };
 
 export function fetchCompanySettings(companyId: string, token: string) {
@@ -84,7 +91,7 @@ export function fetchCompanySettings(companyId: string, token: string) {
 export function updateCompanySettings(
   companyId: string,
   token: string,
-  body: { businessField: string },
+  body: { adminEmail?: string; companyPhone?: string },
 ) {
   return apiFetch<CompanySettings>(`companies/${companyId}/settings`, {
     method: "PATCH",
