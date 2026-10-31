@@ -21,6 +21,7 @@ export default function PengaturanPerusahaanPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [settings, setSettings] = useState<CompanySettings | null>(null);
+  const [adminFullName, setAdminFullName] = useState("");
   const [adminEmail, setAdminEmail] = useState("");
   const [companyPhone, setCompanyPhone] = useState("");
   const saveLock = useRef(false);
@@ -36,6 +37,7 @@ export default function PengaturanPerusahaanPage() {
         const data = await fetchCompanySettings(companyId, token);
         if (cancelled) return;
         setSettings(data);
+        setAdminFullName(data.adminAccount.fullName);
         setAdminEmail(data.adminAccount.email);
         setCompanyPhone(data.companyPhone ?? "");
         setError(null);
@@ -55,13 +57,15 @@ export default function PengaturanPerusahaanPage() {
     if (!token || !companyId || !settings) return;
     if (saveLock.current || busy) return;
 
+    const nameTrim = adminFullName.trim();
     const emailTrim = adminEmail.trim();
     const phoneTrim = companyPhone.trim();
+    const nameChanged = nameTrim !== settings.adminAccount.fullName;
     const emailChanged =
       emailTrim.toLowerCase() !== settings.adminAccount.email.toLowerCase();
     const phoneChanged = phoneTrim !== (settings.companyPhone ?? "");
 
-    if (!emailChanged && !phoneChanged) {
+    if (!nameChanged && !emailChanged && !phoneChanged) {
       setError("Tidak ada perubahan.");
       return;
     }
@@ -71,10 +75,12 @@ export default function PengaturanPerusahaanPage() {
     setError(null);
     try {
       const updated = await updateCompanySettings(companyId, token, {
+        ...(nameChanged ? { adminFullName: nameTrim } : {}),
         ...(emailChanged ? { adminEmail: emailTrim } : {}),
         ...(phoneChanged ? { companyPhone: phoneTrim } : {}),
       });
       setSettings(updated);
+      setAdminFullName(updated.adminAccount.fullName);
       setAdminEmail(updated.adminAccount.email);
       setCompanyPhone(updated.companyPhone ?? "");
 
@@ -105,9 +111,8 @@ export default function PengaturanPerusahaanPage() {
     <PortalShell>
       <h1>Pengaturan</h1>
       <p className="register-hint">
-        Hanya akun Pimpinan (Master/Atasan). Kelola email akun Admin dan
-        nomor telepon perusahaan (tampil di verifikasi keanggotaan & sanggahan
-        lintas PT).
+        Hanya akun Pimpinan (Master/Atasan). Kelola nama & email akun Admin
+        serta telepon perusahaan.
       </p>
 
       {loading ? (
@@ -133,10 +138,6 @@ export default function PengaturanPerusahaanPage() {
           {settings ? (
             <dl className="portal-settings-readonly">
               <div>
-                <dt>Nama Admin</dt>
-                <dd>{settings.adminAccount.fullName}</dd>
-              </div>
-              <div>
                 <dt>ID login Admin</dt>
                 <dd>{settings.adminAccount.publicLoginId}</dd>
               </div>
@@ -152,6 +153,16 @@ export default function PengaturanPerusahaanPage() {
           ) : null}
 
           <form className="register-grid portal-modal-form" onSubmit={onSave}>
+            <label className="register-full">
+              <span>Nama Admin</span>
+              <input
+                value={adminFullName}
+                onChange={(e) => setAdminFullName(e.target.value)}
+                required
+                minLength={2}
+                disabled={busy}
+              />
+            </label>
             <label className="register-full">
               <span>Email Admin</span>
               <input
