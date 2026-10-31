@@ -91,7 +91,7 @@ export function fetchCompanySettings(companyId: string, token: string) {
 export function updateCompanySettings(
   companyId: string,
   token: string,
-  body: { adminEmail?: string; companyPhone?: string },
+  body: { adminEmail?: string; adminFullName?: string; companyPhone?: string },
 ) {
   return apiFetch<CompanySettings>(`companies/${companyId}/settings`, {
     method: "PATCH",
