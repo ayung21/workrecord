@@ -114,12 +114,6 @@ type Props = {
   verification: CompanyVerification;
   busy: boolean;
   showLockedNotice: boolean;
-  businessField?: string;
-  canEditBusinessField?: boolean;
-  businessFieldBusy?: boolean;
-  businessFieldError?: string | null;
-  onBusinessFieldChange?: (value: string) => void;
-  onSaveBusinessField?: () => void;
   onUpload: (type: string, file: File) => void;
   onPreview?: (type: string) => void;
   onSubmitReview: () => void;
@@ -137,12 +131,6 @@ export function CompanyVerificationPanel({
   verification,
   busy,
   showLockedNotice,
-  businessField = "",
-  canEditBusinessField = false,
-  businessFieldBusy = false,
-  businessFieldError = null,
-  onBusinessFieldChange,
-  onSaveBusinessField,
   onUpload,
   onPreview,
   onSubmitReview,
@@ -197,49 +185,6 @@ export function CompanyVerificationPanel({
           certificate={verification.memberCertificate}
         />
       )}
-
-      <section className="register-section-card portal-settings-card company-verify-business-field">
-        <h2>Bidang usaha</h2>
-        <p className="register-hint">
-          Ditampilkan pada verifikasi keanggotaan WorkRecord. Isi saat pendaftaran;
-          hanya Pimpinan (Master) yang dapat mengubah setelah itu.
-        </p>
-        <form
-          className="register-grid portal-modal-form"
-          onSubmit={(e) => {
-            e.preventDefault();
-            onSaveBusinessField?.();
-          }}
-        >
-          <label className="register-full">
-            <span>Bidang usaha</span>
-            <input
-              value={businessField}
-              onChange={(e) => onBusinessFieldChange?.(e.target.value)}
-              placeholder="Contoh: Manufaktur tekstil, Jasa logistik, Retail F&B"
-              maxLength={200}
-              disabled={!canEditBusinessField || businessFieldBusy || busy}
-              readOnly={!canEditBusinessField}
-            />
-          </label>
-          {businessFieldError ? (
-            <p className="explore-error register-full" role="alert">
-              {businessFieldError}
-            </p>
-          ) : null}
-          {canEditBusinessField ? (
-            <div className="register-full register-form-actions">
-              <button
-                type="submit"
-                className="button button-blue"
-                disabled={businessFieldBusy || busy}
-              >
-                {businessFieldBusy ? "Menyimpan…" : "Simpan bidang usaha"}
-              </button>
-            </div>
-          ) : null}
-        </form>
-      </section>
 
       <section className="company-verify-status-card" aria-labelledby="company-verify-status-title">
         <div className="company-verify-status-top">

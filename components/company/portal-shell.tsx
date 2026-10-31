@@ -3,15 +3,22 @@
 import Link from "@/components/app-link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { useMemo } from "react";
 import { HeaderAuthLink } from "@/components/header-auth-link";
 import { useCompanyPortalStatus } from "@/components/company/company-portal-status";
+import { readSession } from "@/lib/auth/session";
 
-const links = [
+const baseLinks = [
   { href: "/perusahaan/cari", label: "Cari NIK" },
   { href: "/perusahaan/list", label: "List" },
   { href: "/perusahaan/report", label: "Report" },
   { href: "/perusahaan/iklan", label: "Iklan" },
   { href: "/perusahaan/verifikasi", label: "Verifikasi dokumen" },
+  {
+    href: "/perusahaan/pengaturan",
+    label: "Pengaturan",
+    leadershipOnly: true as const,
+  },
 ];
 
 export function PortalShell({
@@ -23,6 +30,16 @@ export function PortalShell({
 }) {
   const pathname = usePathname();
   const { isActive, loading: statusLoading } = useCompanyPortalStatus();
+  const session = readSession();
+  const links = useMemo(
+    () =>
+      baseLinks.filter(
+        (l) =>
+          !("leadershipOnly" in l && l.leadershipOnly) ||
+          session?.user.accountType === "LEADERSHIP",
+      ),
+    [session?.user.accountType],
+  );
   return (
     <div className="site-shell explore-page portal-shell-wide">
       <header className="site-header">
@@ -42,8 +59,9 @@ export function PortalShell({
           <nav className="desktop-nav portal-nav">
             {links.map((l) => {
               const isVerification = l.href === "/perusahaan/verifikasi";
+              const isSettings = l.href === "/perusahaan/pengaturan";
               const locked =
-                !statusLoading && !isActive && !isVerification;
+                !statusLoading && !isActive && !isVerification && !isSettings;
               if (locked) {
                 return (
                   <span
