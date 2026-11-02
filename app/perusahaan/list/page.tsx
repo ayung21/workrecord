@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  ChevronDown,
   Check,
   Eye,
   History,
@@ -13,6 +14,7 @@ import {
   Trash2,
   X,
   XCircle,
+  UserPlus,
 } from "lucide-react";
 import Swal from "sweetalert2";
 import { PortalShell } from "@/components/company/portal-shell";
@@ -142,7 +144,7 @@ type Row = {
   requestSnapshot?: EmployeeChangeRequest | null;
 };
 
-type BlacklistFilter = "all" | "yes" | "no";
+type BlacklistFilter = "all" | "yes" | "no" | "pending_approval";
 type EmploymentFilter = "all" | "active" | "ended";
 
 function EmployeeThumb({
@@ -348,6 +350,7 @@ export default function ListKaryawanPage() {
   const [detailRow, setDetailRow] = useState<Row | null>(null);
   const [historyRow, setHistoryRow] = useState<Row | null>(null);
   const [showDeletedHistory, setShowDeletedHistory] = useState(false);
+  const [showAddEmployeeForm, setShowAddEmployeeForm] = useState(false);
   const [deletedRows, setDeletedRows] = useState<DeletedEmployeeRow[]>([]);
   const [deletedLoading, setDeletedLoading] = useState(false);
   const [editCtx, setEditCtx] = useState<{
@@ -378,9 +381,13 @@ export default function ListKaryawanPage() {
   const filteredRows = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     return rows.filter((r) => {
-      if (r.isPending && blacklistFilter === "yes") return false;
-      if (blacklistFilter === "yes" && !r.hasBlacklist) return false;
-      if (blacklistFilter === "no" && r.hasBlacklist) return false;
+      if (blacklistFilter === "pending_approval") {
+        if (!isRowApprovalLocked(r.approvalState)) return false;
+      } else {
+        if (r.isPending && blacklistFilter === "yes") return false;
+        if (blacklistFilter === "yes" && !r.hasBlacklist) return false;
+        if (blacklistFilter === "no" && r.hasBlacklist) return false;
+      }
       if (employmentFilter === "active" && r.leftAt) return false;
       if (employmentFilter === "ended" && !r.leftAt) return false;
       if (!q) return true;
@@ -1039,8 +1046,29 @@ export default function ListKaryawanPage() {
         Sanggahan berbayar dengan catatan pribadi (hanya PT Anda yang melihat alasan).
       </p>
 
-      <section className="register-section">
-        <h2>Tambah karyawan</h2>
+      <section className="register-section-card portal-add-employee-section">
+        <div className="portal-add-employee-head">
+          <h2>
+            <span className="register-section-icon" aria-hidden>
+              <UserPlus size={18} strokeWidth={2} />
+            </span>
+            Tambah karyawan
+          </h2>
+          <button
+            type="button"
+            className={`button button-outline portal-add-employee-toggle${showAddEmployeeForm ? " is-active" : ""}`}
+            aria-expanded={showAddEmployeeForm}
+            onClick={() => setShowAddEmployeeForm((v) => !v)}
+          >
+            {showAddEmployeeForm ? "Sembunyikan form" : "Tampilkan form"}
+            <ChevronDown
+              size={16}
+              aria-hidden
+              className={`portal-add-employee-chevron${showAddEmployeeForm ? " is-open" : ""}`}
+            />
+          </button>
+        </div>
+        {showAddEmployeeForm ? (
         <form className="register-grid register-grid-employee" onSubmit={onAdd}>
           <label>
             <span>NIK (16 digit)</span>
@@ -1238,6 +1266,7 @@ export default function ListKaryawanPage() {
             </span>
           </div>
         </form>
+        ) : null}
       </section>
 
       {error && <p className="explore-error">{error}</p>}
@@ -1275,6 +1304,7 @@ export default function ListKaryawanPage() {
             <option value="all">Semua</option>
             <option value="no">Belum disanggahkan</option>
             <option value="yes">Sedang disanggahkan</option>
+            <option value="pending_approval">Menunggu persetujuan</option>
           </select>
         </label>
         <label>

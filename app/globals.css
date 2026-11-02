@@ -273,6 +273,15 @@
 .register-section-card h2{display:flex;align-items:center;gap:10px;margin:0 0 16px;font-family:"Inter",Arial,Helvetica,sans-serif;font-size:16px;font-weight:600;line-height:1.4;letter-spacing:0;color:var(--navy)}
 .register-section-icon{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:#eff4ff;color:var(--blue);flex-shrink:0}
 .register-section h2{display:flex;align-items:center;gap:8px;margin:0 0 14px;font-size:15px;font-weight:650;color:var(--navy)}
+.portal-add-employee-section{margin-bottom:28px}
+.portal-add-employee-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 16px;margin-bottom:0}
+.portal-add-employee-head h2{margin:0!important}
+.portal-add-employee-section .register-grid{margin-top:18px}
+.portal-add-employee-toggle{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;padding:10px 14px}
+.portal-add-employee-chevron{transition:transform .2s ease;flex-shrink:0}
+.portal-add-employee-chevron.is-open{transform:rotate(180deg)}
+.portal-header-actions{display:flex;align-items:center;gap:12px;flex-shrink:0}
+.portal-mobile-nav .portal-nav-disabled{display:block;padding:12px 0}
 .register-grid .auth-field > input{width:100%;padding:14px 16px;border:1px solid #dbe2eb;border-radius:10px;font:inherit;font-size:14px;background:#fff}
 .register-grid .auth-field > input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 4px #4877eb28}
 .register-grid .auth-field .auth-input-wrap input{width:100%;padding:14px 16px 14px 44px;border:1px solid #dbe2eb;border-radius:10px;font:inherit;font-size:14px;background:#fff}
