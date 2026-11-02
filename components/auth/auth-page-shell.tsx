@@ -91,6 +91,7 @@ export function AuthPageShell({
               height={80}
               className="auth-panel-logo-img"
               priority
+              unoptimized
             />
           </Link>
           <p className="auth-panel-eyebrow">{p.eyebrow}</p>

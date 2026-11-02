@@ -12,6 +12,7 @@ export function AuthFormLogo() {
         height={88}
         className="auth-form-logo-img"
         priority
+        unoptimized
       />
     </Link>
   );

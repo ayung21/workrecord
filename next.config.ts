@@ -8,6 +8,9 @@ const apiOrigin = (
 
 const nextConfig: NextConfig = {
   images: {
+    // Vinext/Workers: layanan `/_next/image` sering tidak tersedia di server produksi;
+    // aset di `public/` dilayani langsung (/brand/logo.png).
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: "http",

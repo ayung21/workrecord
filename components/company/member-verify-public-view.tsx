@@ -51,6 +51,7 @@ export function MemberVerifyPublicView({
             width={180}
             height={56}
             priority
+            unoptimized
           />
         </Link>
         <h1 className="member-verify-title">
