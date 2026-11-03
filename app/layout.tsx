@@ -5,11 +5,12 @@ export const metadata: Metadata = {
   description: "Kenali riwayat kerja calon tenaga kerja melalui WorkRecord. Platform pencatatan riwayat kerja dengan peran Admin dan Master untuk perusahaan, HRD, LPK, dan outsourcing.",
   icons: {
     icon: [
+      { url: "/favicon.ico", sizes: "32x32" },
       { url: "/icon.png", type: "image/png", sizes: "32x32" },
       { url: "/favicon.svg", type: "image/svg+xml" },
     ],
-    shortcut: "/icon.png",
-    apple: "/apple-touch-icon.png",
+    shortcut: "/favicon.ico",
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
   },
 };
 export default function RootLayout({children}: Readonly<{children: React.ReactNode}>) {return <html lang="id"><body>{children}</body></html>}
