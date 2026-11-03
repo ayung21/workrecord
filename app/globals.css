@@ -22,13 +22,14 @@
 .portal-badge-pending{background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe}
 .portal-badge-rejected{background:#fef2f2;color:#b91c1c;border:1px solid #fecaca}
 .portal-badge-ok{background:#ecfdf5;color:#047857;border:1px solid #a7f3d0}
+.portal-badge-ended{background:#f1f5f9;color:#475569;border:1px solid #cbd5e1}
 .portal-badge-blacklist{background:#fff7ed;color:#c2410c;border:1px solid #fed7aa}
 .portal-row-pending{background:#f8fafc}
 .portal-modal-backdrop{position:fixed;inset:0;z-index:100;background:#0f172a66;display:grid;place-items:center;padding:24px}
 .portal-modal{width:min(560px,100%);max-height:min(90vh,900px);overflow:auto;background:#fff;border-radius:16px;box-shadow:0 24px 64px #1424422e;border:1px solid #e2e8f0}
 .portal-modal-wide{width:min(720px,100%)}
 .portal-modal-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 20px;border-bottom:1px solid #edf1f7}
-.portal-modal-header h2{margin:0;font-size:18px;font-weight:600;line-height:1.4;color:var(--navy)}
+.portal-modal-header h2{margin:0;font-family:"Inter",Arial,Helvetica,sans-serif;font-size:18px;font-weight:550;line-height:1.45;letter-spacing:-.02em;color:var(--navy);-webkit-font-smoothing:antialiased}
 .portal-modal-close{border:0;background:transparent;padding:6px;border-radius:8px;color:#64748b;cursor:pointer}
 .portal-modal-close:hover{background:#f1f5f9}
 .portal-modal-body{padding:20px}
