@@ -147,6 +147,42 @@ type Row = {
 type BlacklistFilter = "all" | "yes" | "no" | "pending_approval";
 type EmploymentFilter = "all" | "active" | "ended";
 
+function isEmploymentEnded(leftAt: string | null | undefined): boolean {
+  return Boolean(leftAt?.trim());
+}
+
+function employeeStatusBadge(row: Row) {
+  if (row.approvalState === "pending") {
+    return (
+      <span className="portal-badge portal-badge-pending">
+        {row.pendingAction === "BLACKLIST"
+          ? "Menunggu sanggahan"
+          : row.pendingAction === "UPDATE"
+            ? "Menunggu ubah data"
+            : "Menunggu persetujuan"}
+      </span>
+    );
+  }
+  if (row.approvalState === "awaiting_payment") {
+    return (
+      <span className="portal-badge portal-badge-pending">
+        Menunggu pembayaran
+      </span>
+    );
+  }
+  if (row.approvalState === "rejected") {
+    return (
+      <span className="portal-badge portal-badge-rejected">Perlu revisi</span>
+    );
+  }
+  if (isEmploymentEnded(row.leftAt)) {
+    return (
+      <span className="portal-badge portal-badge-ended">Selesai</span>
+    );
+  }
+  return <span className="portal-badge portal-badge-ok">Aktif</span>;
+}
+
 function EmployeeThumb({
   companyId,
   recordId,
@@ -1391,27 +1427,7 @@ export default function ListKaryawanPage() {
                       {r.nationalIdNumber ?? "—"}
                     </td>
                     <td>{r.position ?? "—"}</td>
-                    <td>
-                      {r.approvalState === "pending" ? (
-                        <span className="portal-badge portal-badge-pending">
-                          {r.pendingAction === "BLACKLIST"
-                            ? "Menunggu sanggahan"
-                            : r.pendingAction === "UPDATE"
-                              ? "Menunggu ubah data"
-                              : "Menunggu persetujuan"}
-                        </span>
-                      ) : r.approvalState === "awaiting_payment" ? (
-                        <span className="portal-badge portal-badge-pending">
-                          Menunggu pembayaran
-                        </span>
-                      ) : r.approvalState === "rejected" ? (
-                        <span className="portal-badge portal-badge-rejected">
-                          Perlu revisi
-                        </span>
-                      ) : (
-                        <span className="portal-badge portal-badge-ok">Aktif</span>
-                      )}
-                    </td>
+                    <td>{employeeStatusBadge(r)}</td>
                     <td>
                       {r.hasBlacklist ? (
                         <span
