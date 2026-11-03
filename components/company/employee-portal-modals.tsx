@@ -144,6 +144,10 @@ function DetailGrid({
     ["Posisi / jabatan", data.position],
     ["Mulai bekerja", fmtDate(data.joinedAt)],
     ["Selesai", fmtDate(data.leftAt)],
+    [
+      "Status kerja",
+      data.leftAt?.toString().trim() ? "Selesai" : "Aktif",
+    ],
     ["ID karyawan internal", data.employeeIdNumber],
     ["Ringkasan perilaku", data.conductSummary],
   ];
@@ -325,9 +329,9 @@ export function EmployeeEditModal({
 }) {
   const [form, setForm] = useState(() => ({
     ...initial,
-    dateOfBirth: toDateInputValue(initial.dateOfBirth),
-    joinedAt: toDateInputValue(initial.joinedAt),
-    leftAt: toDateInputValue(initial.leftAt),
+    dateOfBirth: toDateInputValue(initial.dateOfBirth) || undefined,
+    joinedAt: toDateInputValue(initial.joinedAt) || undefined,
+    leftAt: toDateInputValue(initial.leftAt) || undefined,
   }));
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoProcessing, setPhotoProcessing] = useState(false);
@@ -357,9 +361,9 @@ export function EmployeeEditModal({
   useEffect(() => {
     setForm({
       ...initial,
-      dateOfBirth: toDateInputValue(initial.dateOfBirth),
-      joinedAt: toDateInputValue(initial.joinedAt),
-      leftAt: toDateInputValue(initial.leftAt),
+      dateOfBirth: toDateInputValue(initial.dateOfBirth) || undefined,
+      joinedAt: toDateInputValue(initial.joinedAt) || undefined,
+      leftAt: toDateInputValue(initial.leftAt) || undefined,
     });
   }, [initial, recordId]);
 
