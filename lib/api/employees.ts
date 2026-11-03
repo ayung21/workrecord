@@ -109,12 +109,45 @@ export type UpdateEmployeeInput = {
   placeOfBirth?: string;
   dateOfBirth?: string;
   joinedAt?: string;
-  leftAt?: string;
+  leftAt?: string | null;
   position?: string;
   employeeIdNumber?: string;
   conductSummary?: string;
   photo?: File;
 };
+
+function normalizeOptionalDate(
+  value: string | null | undefined,
+  empty: "omit" | "null",
+): string | null | undefined {
+  if (value === undefined) return undefined;
+  if (value === null) return empty === "null" ? null : undefined;
+  if (!value.trim()) return empty === "null" ? null : undefined;
+  return value.trim();
+}
+
+/** Payload PATCH — hindari string kosong yang gagal validasi `@IsDateString`. */
+function serializeEmployeeUpdateBody(
+  input: Omit<UpdateEmployeeInput, "photo">,
+): Record<string, unknown> {
+  const body: Record<string, unknown> = {};
+  for (const [key, val] of Object.entries(input)) {
+    if (val === undefined) continue;
+    if (key === "leftAt") {
+      const normalized = normalizeOptionalDate(val as string | null, "null");
+      if (normalized !== undefined) body.leftAt = normalized;
+      continue;
+    }
+    if (key === "dateOfBirth" || key === "joinedAt") {
+      const normalized = normalizeOptionalDate(val as string | null, "omit");
+      if (normalized !== undefined) body[key] = normalized;
+      continue;
+    }
+    if (typeof val === "string" && !val.trim()) continue;
+    body[key] = val;
+  }
+  return body;
+}
 
 export function isPendingEmployeeCreate(
   data: unknown,
@@ -198,24 +231,15 @@ export async function updateEmployeeRecord(
   input: UpdateEmployeeInput,
 ) {
   const base = getApiBaseUrl();
-  const hasPhoto = Boolean(input.photo);
+  const { photo, ...fields } = input;
+  const body = serializeEmployeeUpdateBody(fields);
+  const hasPhoto = Boolean(photo);
   if (hasPhoto) {
     const form = new FormData();
-    if (input.photo) form.append("photo", input.photo);
-    if (input.nationalIdNumber) {
-      form.append("nationalIdNumber", input.nationalIdNumber);
-    }
-    if (input.employeeName) form.append("employeeName", input.employeeName);
-    if (input.placeOfBirth) form.append("placeOfBirth", input.placeOfBirth);
-    if (input.dateOfBirth) form.append("dateOfBirth", input.dateOfBirth);
-    if (input.joinedAt) form.append("joinedAt", input.joinedAt);
-    if (input.leftAt) form.append("leftAt", input.leftAt);
-    if (input.position) form.append("position", input.position);
-    if (input.employeeIdNumber) {
-      form.append("employeeIdNumber", input.employeeIdNumber);
-    }
-    if (input.conductSummary) {
-      form.append("conductSummary", input.conductSummary);
+    if (photo) form.append("photo", photo);
+    for (const [key, val] of Object.entries(body)) {
+      if (val === null) form.append(key, "");
+      else if (val !== undefined) form.append(key, String(val));
     }
     const res = await fetch(
       `${base}/companies/${companyId}/employee-records/${recordId}`,
@@ -244,7 +268,7 @@ export async function updateEmployeeRecord(
   return apiFetch(`companies/${companyId}/employee-records/${recordId}`, {
     method: "PATCH",
     token,
-    body: input,
+    body,
   });
 }
 
