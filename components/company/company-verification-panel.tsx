@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useState } from "react";
 import {
   Building2,
@@ -20,7 +21,20 @@ import {
   companyDocumentMaxSizeLabel,
 } from "@/lib/company/document-upload";
 import { PORTAL_LOCKED_MESSAGE } from "@/lib/company/verification";
-import { CompanyMemberCertificateSection } from "@/components/company/company-member-certificate-section";
+
+const CompanyMemberCertificateSection = dynamic(
+  () =>
+    import("@/components/company/company-member-certificate-section").then(
+      (m) => m.CompanyMemberCertificateSection,
+    ),
+  {
+    loading: () => (
+      <p className="explore-muted company-member-cert-loading">
+        Memuat sertifikat member…
+      </p>
+    ),
+  },
+);
 
 const DOC_META: Record<
   string,

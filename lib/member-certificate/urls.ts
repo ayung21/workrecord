@@ -1,4 +1,6 @@
-export { getSiteOrigin } from "@/lib/seo/site-url";
+import { getSiteOrigin } from "@/lib/seo/site-url";
+
+export { getSiteOrigin };
 
 export function memberVerifyPageUrl(verifyToken: string): string {
   return `${getSiteOrigin()}/verifikasi-member/${encodeURIComponent(verifyToken)}`;
