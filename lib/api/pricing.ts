@@ -2,6 +2,10 @@ import { apiFetch } from "./client";
 
 export type PricingCatalog = {
   currency: string;
+  supportHotline?: {
+    phone: string;
+    label?: string;
+  } | null;
   fees: {
     sanggahanKaryawanIdr: number;
     /** Alias kompatibilitas */
