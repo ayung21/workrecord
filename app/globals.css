@@ -782,3 +782,11 @@
 @media(max-width:850px){
 .process-model-notes{grid-template-columns:1fr;margin-top:40px;padding-top:32px}
 }
+.support-hotline-link{display:inline-flex;align-items:center;gap:8px;margin-top:14px;font-size:14px;line-height:1.5;color:var(--blue);font-weight:500}
+.support-hotline-link strong{font-weight:700;color:inherit}
+.support-hotline-link:hover{text-decoration:underline}
+.footer-hotline{margin-top:18px}
+.portal-support-footer{border-top:1px solid #e8edf4;padding:20px 0 28px;background:#f8fafd}
+.portal-support-footer .support-hotline-link{margin:0}
+.member-verify-hotline{display:inline;color:var(--blue);font-weight:600}
+.member-verify-hotline:hover{text-decoration:underline}

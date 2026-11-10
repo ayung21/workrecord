@@ -18,6 +18,7 @@ import {
   memberCertificatePageUrl,
   memberVerifyPageUrl,
 } from "@/lib/member-certificate/urls";
+import { SupportHotline } from "@/components/support-hotline";
 
 type Props = {
   data: PublicMemberVerification;
@@ -75,7 +76,10 @@ export function MemberVerifyPublicView({
           <Info size={22} strokeWidth={2} aria-hidden />
           <div>
             <strong>STATUS KEANGGOTAAN TIDAK AKTIF</strong>
-            <p>Hubungi perusahaan atau dukungan WorkRecord untuk informasi.</p>
+            <p>
+              Hubungi perusahaan atau dukungan WorkRecord untuk informasi.{" "}
+              <SupportHotline showIcon={false} className="member-verify-hotline" />
+            </p>
           </div>
         </div>
       )}

@@ -8,6 +8,7 @@ import { Menu, X } from "lucide-react";
 import { HeaderAuthLink } from "@/components/header-auth-link";
 import { useCompanyPortalStatus } from "@/components/company/company-portal-status";
 import { readSession } from "@/lib/auth/session";
+import { SupportHotline } from "@/components/support-hotline";
 
 const baseLinks = [
   { href: "/perusahaan/cari", label: "Cari NIK" },
@@ -158,6 +159,11 @@ export function PortalShell({
           {children}
         </div>
       </main>
+      <footer className="portal-support-footer">
+        <div className="container">
+          <SupportHotline lang={lang} className="support-hotline-link" />
+        </div>
+      </footer>
     </div>
   );
 }
