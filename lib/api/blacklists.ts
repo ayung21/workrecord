@@ -64,6 +64,7 @@ export function cancelBlacklist(token: string, blacklistId: string) {
 export type CompleteBlacklistPaymentResult =
   | { kind: "redirect" }
   | { kind: "manual"; manualTransfer: ManualTransferInfo }
+  | { kind: "qris"; qris: NonNullable<PaymentCheckoutResult["qris"]> }
   | { kind: "mock_paid" };
 
 export async function completeBlacklistPayment(
@@ -72,6 +73,9 @@ export async function completeBlacklistPayment(
 ): Promise<CompleteBlacklistPaymentResult> {
   if (checkout.manualTransfer) {
     return { kind: "manual", manualTransfer: checkout.manualTransfer };
+  }
+  if (checkout.qris?.qrUrl || checkout.qris?.qrContent) {
+    return { kind: "qris", qris: checkout.qris };
   }
   if (
     checkout.redirectUrl &&
@@ -82,7 +86,7 @@ export async function completeBlacklistPayment(
     return { kind: "redirect" };
   }
   throw new Error(
-    "Menunggu konfirmasi pembayaran. Untuk transfer manual, selesaikan transfer lalu minta admin WorkRecord mengonfirmasi di menu Transaksi.",
+    "Pembayaran belum punya QRIS atau instruksi transfer. Muat ulang halaman lalu coba sanggahan lagi.",
   );
 }
 
