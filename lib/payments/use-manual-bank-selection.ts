@@ -8,6 +8,7 @@ import {
 
 export function useManualBankSelection() {
   const [accounts, setAccounts] = useState<ManualPaymentBankAccount[]>([]);
+  const [gateway, setGateway] = useState("manual");
   const [selectedId, setSelectedId] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -16,10 +17,11 @@ export function useManualBankSelection() {
     let cancelled = false;
     setLoading(true);
     fetchManualPaymentBankAccounts()
-      .then((rows) => {
+      .then((res) => {
         if (cancelled) return;
-        setAccounts(rows);
-        if (rows.length === 1) setSelectedId(rows[0].id);
+        setGateway(res.gateway);
+        setAccounts(res.accounts);
+        if (res.accounts.length === 1) setSelectedId(res.accounts[0].id);
       })
       .catch(() => {
         if (!cancelled) setError("Gagal memuat daftar rekening pembayaran.");
@@ -32,16 +34,20 @@ export function useManualBankSelection() {
     };
   }, []);
 
-  const needsSelection = accounts.length > 1;
+  const isManualGateway = gateway === "manual";
+
+  const needsSelection = isManualGateway && accounts.length > 1;
 
   const ready = useMemo(() => {
+    if (!isManualGateway) return !loading;
     if (loading) return false;
     if (accounts.length === 0) return false;
     if (accounts.length === 1) return true;
     return Boolean(selectedId);
-  }, [accounts.length, loading, selectedId]);
+  }, [accounts.length, isManualGateway, loading, selectedId]);
 
   const validateSelection = (): string | null => {
+    if (!isManualGateway) return null;
     if (loading) return "Memuat rekening tujuan…";
     if (accounts.length === 0) {
       return "Rekening pembayaran belum dikonfigurasi. Hubungi admin WorkRecord.";
@@ -56,6 +62,8 @@ export function useManualBankSelection() {
 
   return {
     accounts,
+    gateway,
+    isManualGateway,
     selectedId,
     setSelectedId,
     selectedAccountId,

@@ -14,7 +14,11 @@ import { readSession } from "@/lib/auth/session";
 import { checkoutCompanyAd } from "@/lib/api/ads";
 import { ManualBankAccountPicker } from "@/components/payments/manual-bank-picker";
 import { ManualTransferCard } from "@/components/payments/manual-transfer-card";
-import type { ManualTransferInfo } from "@/lib/api/manual-payment";
+import { QrisPaymentDialog } from "@/components/payments/qris-payment-dialog";
+import type {
+  ManualTransferInfo,
+  PaymentCheckoutResult,
+} from "@/lib/api/manual-payment";
 import { useManualBankSelection } from "@/lib/payments/use-manual-bank-selection";
 import { ApiRequestError } from "@/lib/api/client";
 import { fetchPricingCatalog, type PricingCatalog } from "@/lib/api/pricing";
@@ -38,6 +42,9 @@ export default function CompanyAdsPage() {
   const [pendingManual, setPendingManual] = useState<ManualTransferInfo | null>(
     null,
   );
+  const [qris, setQris] = useState<
+    NonNullable<PaymentCheckoutResult["qris"]> | null
+  >(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const manualBank = useManualBankSelection();
@@ -98,8 +105,15 @@ export default function CompanyAdsPage() {
         );
         return;
       }
+      if (checkout.qris?.qrUrl || checkout.qris?.qrContent) {
+        setQris(checkout.qris);
+        setMessage(
+          "Pesanan iklan terdaftar. Selesaikan pembayaran QRIS di jendela yang muncul.",
+        );
+        return;
+      }
       setError(
-        "Instruksi transfer manual tidak diterima dari server. Pastikan API memakai PAYMENT_GATEWAY=manual, lalu coba lagi.",
+        "Pembayaran tidak menghasilkan QRIS atau instruksi transfer. Periksa PAYMENT_GATEWAY di API.",
       );
     } catch (err) {
       setError(
@@ -147,6 +161,15 @@ export default function CompanyAdsPage() {
             title="Transfer pembayaran iklan"
           />
         ) : null}
+
+        <QrisPaymentDialog
+          token={token}
+          qris={qris}
+          open={Boolean(qris)}
+          onOpenChange={(open) => {
+            if (!open) setQris(null);
+          }}
+        />
 
         <div className="company-ads-layout">
           <form className="company-ads-form" onSubmit={onSubmit}>
@@ -248,13 +271,15 @@ export default function CompanyAdsPage() {
               </div>
             </section>
 
+            {manualBank.isManualGateway ? (
             <ManualBankAccountPicker
               accounts={manualBank.accounts}
               value={manualBank.selectedId}
               onChange={manualBank.setSelectedId}
               disabled={busy || manualBank.loading}
             />
-            {manualBank.error ? (
+            ) : null}
+            {manualBank.isManualGateway && manualBank.error ? (
               <p className="explore-error">{manualBank.error}</p>
             ) : null}
 

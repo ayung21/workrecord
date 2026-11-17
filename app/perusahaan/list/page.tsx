@@ -15,6 +15,7 @@ import {
   X,
   XCircle,
   UserPlus,
+  CreditCard,
 } from "lucide-react";
 import Swal from "sweetalert2";
 import { PortalShell } from "@/components/company/portal-shell";
@@ -42,6 +43,8 @@ import {
   rejectBlacklistRequest,
 } from "@/lib/api/blacklists";
 import { ManualBankAccountPicker } from "@/components/payments/manual-bank-picker";
+import { QrisPaymentDialog } from "@/components/payments/qris-payment-dialog";
+import { fetchStoredQris, type PaymentCheckoutResult } from "@/lib/api/manual-payment";
 import { showManualTransferAlert } from "@/lib/payments/manual-transfer-alert";
 import { useManualBankSelection } from "@/lib/payments/use-manual-bank-selection";
 import { formatApiErrorMessage } from "@/lib/api/client";
@@ -133,6 +136,7 @@ type Row = {
   hasBlacklist: boolean;
   blacklistId: string | null;
   blacklistNote: string | null;
+  pendingBlacklistPaymentId?: string | null;
   joinedAt: string | null;
   leftAt: string | null;
   isPending?: boolean;
@@ -142,6 +146,7 @@ type Row = {
   changeRevisionCount?: number;
   rejectionReason?: string | null;
   requestSnapshot?: EmployeeChangeRequest | null;
+  paymentId?: string | null;
 };
 
 type BlacklistFilter = "all" | "yes" | "no" | "pending_approval";
@@ -228,6 +233,9 @@ export default function ListKaryawanPage() {
   const token = session?.accessToken ?? "";
   const companyId = session?.user.companyId ?? "";
   const manualBank = useManualBankSelection();
+  const [qris, setQris] = useState<
+    NonNullable<PaymentCheckoutResult["qris"]> | null
+  >(null);
 
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
@@ -295,8 +303,9 @@ export default function ListKaryawanPage() {
     blMode === "admin_submit" ||
     (blMode === "leadership_pay" && !isLeadership);
   const requiresManualBankOnSubmit =
-    blMode === "leadership_approve" ||
-    (blMode === "leadership_pay" && isLeadership);
+    manualBank.isManualGateway &&
+    (blMode === "leadership_approve" ||
+      (blMode === "leadership_pay" && isLeadership));
 
   useEffect(() => {
     if (!blRecordId || !token) {
@@ -552,6 +561,7 @@ export default function ListKaryawanPage() {
             pendingAction: "BLACKLIST",
             isPending: !awaitingPay,
             requestSnapshot: pbl,
+            paymentId: pbl.blacklistCheckoutPaymentId ?? null,
             changeRevisionCount: r.changeRevisionCount ?? 0,
           };
         }
@@ -581,6 +591,16 @@ export default function ListKaryawanPage() {
           ...r,
           approvalState: "none",
           changeRevisionCount: r.changeRevisionCount ?? 0,
+          paymentId:
+            !r.hasBlacklist && r.pendingBlacklistPaymentId
+              ? r.pendingBlacklistPaymentId
+              : null,
+          ...( !r.hasBlacklist && r.pendingBlacklistPaymentId
+            ? {
+                approvalState: "awaiting_payment" as const,
+                pendingAction: "BLACKLIST" as const,
+              }
+            : {}),
         };
       });
 
@@ -856,6 +876,10 @@ export default function ListKaryawanPage() {
             );
             return;
           }
+          if (paid.kind === "qris") {
+            setQris(paid.qris);
+            return;
+          }
           await listSwal.fire({
             icon: "success",
             title: "Disanggahkan",
@@ -903,6 +927,10 @@ export default function ListKaryawanPage() {
           paid.manualTransfer,
           "Setelah dana masuk, admin WorkRecord akan mengonfirmasi. Sanggahan aktif setelah pembayaran disetujui.",
         );
+        return;
+      }
+      if (paid.kind === "qris") {
+        setQris(paid.qris);
         return;
       }
       await listSwal.fire({
@@ -1058,6 +1086,24 @@ export default function ListKaryawanPage() {
       setError(formatApiErrorMessage(err) || "Gagal menyetujui");
     } finally {
       approveSubmitLock.current = false;
+      setBusy(false);
+    }
+  };
+
+  const openQrisPayment = async (paymentId: string) => {
+    if (!token) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const stored = await fetchStoredQris(token, paymentId);
+      if (stored.status === "PAID" || !stored.qris) {
+        await reload();
+        return;
+      }
+      setQris(stored.qris);
+    } catch (err) {
+      setError(formatApiErrorMessage(err) || "Gagal membuka QRIS");
+    } finally {
       setBusy(false);
     }
   };
@@ -1491,6 +1537,17 @@ export default function ListKaryawanPage() {
                             Edit
                           </button>
                         )}
+                      {r.approvalState === "awaiting_payment" && r.paymentId && (
+                          <button
+                            type="button"
+                            className="portal-action-btn portal-action-btn--primary"
+                            disabled={busy}
+                            onClick={() => void openQrisPayment(r.paymentId!)}
+                          >
+                            <CreditCard size={14} aria-hidden />
+                            Bayar
+                          </button>
+                        )}
                       {isLeadership &&
                         !r.id.startsWith("pending-") &&
                         !isRowApprovalLocked(r.approvalState) && (
@@ -1903,6 +1960,18 @@ export default function ListKaryawanPage() {
           </div>
         </div>
       )}
+      <QrisPaymentDialog
+        token={token}
+        qris={qris}
+        open={Boolean(qris)}
+        onOpenChange={(open) => {
+          if (!open) setQris(null);
+        }}
+        onPaid={() => {
+          setQris(null);
+          void reload();
+        }}
+      />
     </PortalShell>
   );
 }
