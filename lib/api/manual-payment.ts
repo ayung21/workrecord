@@ -80,3 +80,10 @@ export function fetchStoredQris(token: string, paymentId: string) {
     qris: PaymentCheckoutResult["qris"];
   }>(`payments/${paymentId}/qris`, { token });
 }
+
+export function cancelPendingPayment(token: string, paymentId: string) {
+  return apiFetch<{ paymentId: string; status: string }>(
+    `payments/${paymentId}/cancel`,
+    { method: "POST", token },
+  );
+}

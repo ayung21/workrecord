@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   ChevronDown,
   Check,
@@ -44,7 +45,7 @@ import {
 } from "@/lib/api/blacklists";
 import { ManualBankAccountPicker } from "@/components/payments/manual-bank-picker";
 import { QrisPaymentDialog } from "@/components/payments/qris-payment-dialog";
-import { fetchStoredQris, type PaymentCheckoutResult } from "@/lib/api/manual-payment";
+import { cancelPendingPayment, fetchStoredQris, type PaymentCheckoutResult } from "@/lib/api/manual-payment";
 import { showManualTransferAlert } from "@/lib/payments/manual-transfer-alert";
 import { useManualBankSelection } from "@/lib/payments/use-manual-bank-selection";
 import { formatApiErrorMessage } from "@/lib/api/client";
@@ -839,6 +840,13 @@ export default function ListKaryawanPage() {
       });
       return;
     }
+    const paysNow =
+      blMode === "leadership_approve" ||
+      (blMode === "leadership_pay" && isLeadership);
+    if (paysNow && manualBank.loading) {
+      setError("Metode pembayaran masih dimuat. Tunggu sebentar lalu klik lagi.");
+      return;
+    }
     if (requiresManualBankOnSubmit) {
       const bankErr = manualBank.validateSelection();
       if (bankErr) {
@@ -1103,6 +1111,32 @@ export default function ListKaryawanPage() {
       setQris(stored.qris);
     } catch (err) {
       setError(formatApiErrorMessage(err) || "Gagal membuka QRIS");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onCancelPendingPayment = async (paymentId: string) => {
+    if (!token || busy) return;
+    const result = await listSwal.fire({
+      icon: "warning",
+      title: "Batalkan pembayaran?",
+      text: "Apakah yakin ingin membatalkan pembayaran?",
+      showCancelButton: true,
+      confirmButtonText: "Ya, batalkan",
+      cancelButtonText: "Tidak, lanjut bayar",
+      confirmButtonColor: "#b91c1c",
+      cancelButtonColor: "#2459df",
+    });
+    if (!result.isConfirmed) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await cancelPendingPayment(token, paymentId);
+      if (qris?.paymentId === paymentId) setQris(null);
+      await reload();
+    } catch (err) {
+      setError(formatApiErrorMessage(err) || "Gagal membatalkan pembayaran");
     } finally {
       setBusy(false);
     }
@@ -1538,15 +1572,28 @@ export default function ListKaryawanPage() {
                           </button>
                         )}
                       {r.approvalState === "awaiting_payment" && r.paymentId && (
-                          <button
-                            type="button"
-                            className="portal-action-btn portal-action-btn--primary"
-                            disabled={busy}
-                            onClick={() => void openQrisPayment(r.paymentId!)}
-                          >
-                            <CreditCard size={14} aria-hidden />
-                            Bayar
-                          </button>
+                          <>
+                            <button
+                              type="button"
+                              className="portal-action-btn portal-action-btn--primary"
+                              disabled={busy}
+                              onClick={() => void openQrisPayment(r.paymentId!)}
+                            >
+                              <CreditCard size={14} aria-hidden />
+                              Bayar
+                            </button>
+                            <button
+                              type="button"
+                              className="portal-action-btn portal-action-btn--danger"
+                              disabled={busy}
+                              onClick={() =>
+                                void onCancelPendingPayment(r.paymentId!)
+                              }
+                            >
+                              <XCircle size={14} aria-hidden />
+                              Cancel
+                            </button>
+                          </>
                         )}
                       {isLeadership &&
                         !r.id.startsWith("pending-") &&
@@ -1797,7 +1844,8 @@ export default function ListKaryawanPage() {
         />
       )}
 
-      {blRecordId && (
+      {blRecordId &&
+        createPortal(
         <div
           className="portal-modal-backdrop"
           role="presentation"
@@ -1931,17 +1979,15 @@ export default function ListKaryawanPage() {
                   ) : null}
                 </>
               )}
+              {!requiresManualBankOnSubmit && manualBank.error ? (
+                <p className="explore-error">{manualBank.error}</p>
+              ) : null}
               {error && <p className="explore-error">{error}</p>}
               <div className="doc-actions">
                 <button
                   type="button"
                   className="button button-blue"
-                  disabled={
-                    busy ||
-                    (requiresManualBankOnSubmit &&
-                      !manualBank.ready &&
-                      !manualBank.loading)
-                  }
+                  disabled={busy}
                   onClick={() => void onBlacklist()}
                 >
                   {busy
@@ -1958,8 +2004,9 @@ export default function ListKaryawanPage() {
               </div>
             </div>
           </div>
-        </div>
-      )}
+        </div>,
+          document.body,
+        )}
       <QrisPaymentDialog
         token={token}
         qris={qris}

@@ -8,7 +8,8 @@ import {
 
 export function useManualBankSelection() {
   const [accounts, setAccounts] = useState<ManualPaymentBankAccount[]>([]);
-  const [gateway, setGateway] = useState("manual");
+  /** null = belum diketahui. Jangan anggap manual sebelum respons API masuk. */
+  const [gateway, setGateway] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -24,7 +25,10 @@ export function useManualBankSelection() {
         if (res.accounts.length === 1) setSelectedId(res.accounts[0].id);
       })
       .catch(() => {
-        if (!cancelled) setError("Gagal memuat daftar rekening pembayaran.");
+        if (cancelled) return;
+        // Gagal memuat bukan berarti transfer manual. Jangan mengunci tombol bayar.
+        setGateway("unknown");
+        setError("Gagal memuat metode pembayaran. Coba lagi.");
       })
       .finally(() => {
         if (!cancelled) setLoading(false);

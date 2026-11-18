@@ -25,6 +25,7 @@ export function QrisPaymentDialog({
   onOpenChange: (open: boolean) => void;
   onPaid?: () => void;
 }) {
+  if (!open) return null;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
