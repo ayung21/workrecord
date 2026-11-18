@@ -64,6 +64,13 @@ export function QrisCheckoutCard({
       <p>
         Scan QR ini dari aplikasi e-wallet atau mobile banking. Nominal yang harus dibayar{" "}
         <strong>{formatIdr(qris.amount)}</strong>.
+        {qris.discountAmount && qris.discountAmount > 0 && qris.originalAmount ? (
+          <>
+            {" "}
+            Voucher berlaku: dari {formatIdr(qris.originalAmount)} menjadi{" "}
+            {formatIdr(qris.amount)}.
+          </>
+        ) : null}
       </p>
       {qris.expiredAt && formatQrisDeadline(qris.expiredAt) ? (
         <p>{formatQrisDeadline(qris.expiredAt)}</p>

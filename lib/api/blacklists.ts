@@ -74,6 +74,9 @@ export async function completeBlacklistPayment(
   if (checkout.manualTransfer) {
     return { kind: "manual", manualTransfer: checkout.manualTransfer };
   }
+  if (checkout.settled) {
+    return { kind: "mock_paid" };
+  }
   if (checkout.qris?.qrUrl || checkout.qris?.qrContent) {
     return { kind: "qris", qris: checkout.qris };
   }

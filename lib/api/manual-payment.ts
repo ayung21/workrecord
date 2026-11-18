@@ -36,7 +36,10 @@ export type PaymentCheckoutResult = {
     contractId: string | null;
     expiredAt: string | null;
     amount: number;
+    originalAmount?: number;
+    discountAmount?: number;
   };
+  settled?: boolean;
 };
 
 export async function fetchManualPaymentBankAccounts() {

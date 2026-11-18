@@ -389,9 +389,8 @@ export default function ListKaryawanPage() {
     };
   }, [blVoucher, blFeeIdr, blRecordId, companyId]);
 
-  const showSanggahanFeeAndVoucher =
-    Boolean(blRecordId) &&
-    (requiresManualBankOnSubmit || blMode === "admin_submit");
+  /** Biaya dan voucher mengikuti sanggahan, bukan jenis gateway pembayaran. */
+  const showSanggahanFeeAndVoucher = Boolean(blRecordId);
 
   const [detailRow, setDetailRow] = useState<Row | null>(null);
   const [historyRow, setHistoryRow] = useState<Row | null>(null);
